@@ -41,8 +41,8 @@ function App() {
     }
   };
 
-  useEffect(() => { fetchLeads(); }, []);
-
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => { fetchLeads(); }, []);
   const addLead = async (form) => {
     try {
       const res = await fetch(`${API}/leads`, {

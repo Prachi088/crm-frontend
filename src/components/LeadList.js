@@ -47,8 +47,8 @@ function Notes({ leadId }) {
     } catch {}
   };
 
-  useEffect(() => { if (open) fetchNotes(); }, [open]);
-
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => { if (open) fetchNotes(); }, [open]);
   const addNote = async () => {
     if (!text.trim()) return;
     try {
