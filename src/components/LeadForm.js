@@ -29,7 +29,7 @@ function LeadForm({ onAdd }) {
           <input
             className="form-input"
             type="text"
-            placeholder="e.g. Prachi Sharma"
+            placeholder="e.g. Prachi Rajput"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
