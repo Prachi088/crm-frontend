@@ -7,7 +7,7 @@ import LeadForm from "./components/LeadForm";
 import LeadList from "./components/LeadList";
 import "./App.css";
 
-const API = "http://localhost:8080/api";
+const API = "https://crm-backend-production-3671.up.railway.app/api";
 
 const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
 
