@@ -5,9 +5,9 @@ A full-stack Customer Relationship Management (CRM) application built with **Spr
 ---
 
 ## 🌐 Live Demo
-- Frontend: https://crm-frontend-drab-eight.vercel.app
-- Backend API: https://crm-backend-production-3671.up.railway.app
-
+- 🌐 Frontend: https://crm-frontend-drab-eight.vercel.app
+- ⚙️ Backend API: https://crm-backend-8ir9.onrender.com
+- 📦 Database: PostgreSQL on Render
 ---
 
 ## 📸 Screenshots
