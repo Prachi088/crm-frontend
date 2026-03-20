@@ -7,8 +7,7 @@ import LeadForm from "./components/LeadForm";
 import LeadList from "./components/LeadList";
 import "./App.css";
 
-const API = "https://crm-backend-production-3671.up.railway.app/api";
-
+const API = "https://crm-backend-8ir9.onrender.com/api";
 const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
 
 const STATUS_COLORS_MAP = {

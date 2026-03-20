@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const API = "https://crm-backend-production-3671.up.railway.app/api";
-
+const API = "https://crm-backend-8ir9.onrender.com/api";
 const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
 
 const STATUS_COLORS = {
