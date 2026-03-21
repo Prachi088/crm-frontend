@@ -1,4 +1,4 @@
-# CRM Lite 🚀
+ # CRM Lite 🚀
 
 A full-stack Customer Relationship Management (CRM) application built with **Spring Boot** and **React**. Designed to manage leads, track deal values, and visualize sales pipeline data.
 
@@ -8,11 +8,12 @@ A full-stack Customer Relationship Management (CRM) application built with **Spr
 - 🌐 Frontend: https://crm-frontend-drab-eight.vercel.app
 - ⚙️ Backend API: https://crm-backend-8ir9.onrender.com
 - 📦 Database: PostgreSQL on Render
+
 ---
 
 ## 📸 Screenshots
 
-> Add screenshots of your app here after deployment
+> Add screenshots of your app here
 
 ---
 
@@ -20,13 +21,14 @@ A full-stack Customer Relationship Management (CRM) application built with **Spr
 
 - ✅ Add, Edit, Delete Leads
 - ✅ Lead status pipeline — Prospect → Qualified → Proposal → Closed Won → Closed Lost
-- ✅ Deal Value tracking per lead
+- ✅ Deal Value tracking per lead (₹)
 - ✅ Notes per lead
 - ✅ Search and filter leads
 - ✅ Analytics dashboard with Pie and Bar charts
 - ✅ Export leads to CSV
 - ✅ REST API with full CRUD operations
-- ✅ MySQL database
+- ✅ PostgreSQL database (production) + MySQL (local)
+- ✅ Deployed on Render (backend) + Vercel (frontend)
 
 ---
 
@@ -35,10 +37,11 @@ A full-stack Customer Relationship Management (CRM) application built with **Spr
 ### Backend
 | Technology | Purpose |
 |-----------|---------|
-| Java 17 | Programming language |
-| Spring Boot 3 | Backend framework |
+| Java 21 | Programming language |
+| Spring Boot 4 | Backend framework |
 | Spring Data JPA | Database ORM |
-| MySQL | Database |
+| PostgreSQL | Production database (Render) |
+| MySQL | Local development database |
 | Maven | Dependency management |
 
 ### Frontend
@@ -60,9 +63,9 @@ A full-stack Customer Relationship Management (CRM) application built with **Spr
 ### Backend Setup
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/crm-lite.git
+git clone https://github.com/Prachi088/crm-backend.git
 
-# 2. Open the backend folder in IntelliJ
+# 2. Open in IntelliJ IDEA
 
 # 3. Create MySQL database
 mysql -u root -p
@@ -75,12 +78,14 @@ spring.datasource.password=YOUR_PASSWORD
 
 # 5. Run the Spring Boot application
 ./mvnw spring-boot:run
+
+# Backend runs at http://localhost:8080
 ```
 
 ### Frontend Setup
 ```bash
-# 1. Go to frontend folder
-cd crm-frontend
+# 1. Clone the repository
+git clone https://github.com/Prachi088/crm-frontend.git
 
 # 2. Install dependencies
 npm install
@@ -102,23 +107,25 @@ http://localhost:3000
 | GET | `/api/leads` | Get all leads |
 | GET | `/api/leads/{id}` | Get lead by ID |
 | POST | `/api/leads` | Create new lead |
-| PUT | `/api/leads/{id}` | Update lead |
-| DELETE | `/api/leads/{id}` | Delete lead |
+| PUT | `/api/leads/{id}` | Update lead by ID |
+| DELETE | `/api/leads/{id}` | Delete lead by ID |
 
 ### Notes
 | Method | Endpoint | Description |
 |--------|---------|-------------|
-| GET | `/api/notes/lead/{leadId}` | Get notes for a lead |
-| POST | `/api/notes/lead/{leadId}` | Add note to lead |
-| PUT | `/api/notes/{id}` | Update note |
-| DELETE | `/api/notes/{id}` | Delete note |
+| GET | `/api/notes` | Get all notes |
+| GET | `/api/notes/{id}` | Get note by ID |
+| GET | `/api/notes/lead/{leadId}` | Get all notes for a lead |
+| POST | `/api/notes/lead/{leadId}` | Add note to a lead |
+| PUT | `/api/notes/{id}` | Update note by ID |
+| DELETE | `/api/notes/{id}` | Delete note by ID |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-crm-lite/                          # Spring Boot Backend
+crm-backend/                        # Spring Boot Backend
 ├── src/main/java/com/crm/crm_lite/
 │   ├── controller/
 │   │   ├── LeadController.java
@@ -135,23 +142,35 @@ crm-lite/                          # Spring Boot Backend
 └── src/main/resources/
     └── application.properties
 
-crm-frontend/                      # React Frontend
+crm-frontend/                       # React Frontend
 ├── src/
 │   ├── components/
 │   │   ├── LeadForm.js
 │   │   └── LeadList.js
 │   ├── App.js
-│   └── App.css
+│   ├── App.css
+│   └── index.css
 └── package.json
 ```
 
 ---
 
-## 👨‍💻 Author
+## 🌍 Deployment
 
-**Your Name**
-- GitHub: [Prachi088 ](https://github.com/Prachi088)
+| Service | Platform | URL |
+|---------|---------|-----|
+| Frontend | Vercel | https://crm-frontend-drab-eight.vercel.app |
+| Backend | Render | https://crm-backend-8ir9.onrender.com |
+| Database | Render PostgreSQL | Managed by Render |
+
+---
+
+## 👩‍💻 Author
+
+**Prachi Rajput**
+- GitHub: [Prachi088](https://github.com/Prachi088)
 - LinkedIn: [Prachi Rajput](https://linkedin.com/in/prachi-rajput-023985280)
+
 ---
 
 ## 📝 License
