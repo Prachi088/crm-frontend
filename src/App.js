@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import LeadForm from "./components/LeadForm";
 import LeadList from "./components/LeadList";
+import LandingPage from "./LandingPage";
 import "./App.css";
 
 const API = "https://crm-backend-8ir9.onrender.com/api";
@@ -19,11 +20,13 @@ const STATUS_COLORS_MAP = {
 };
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
   const [leads, setLeads] = useState([]);
   const [activeTab, setActiveTab] = useState("leads");
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -40,8 +43,9 @@ function App() {
     }
   };
 
-// eslint-disable-next-line react-hooks/exhaustive-deps
-useEffect(() => { fetchLeads(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!showLanding) fetchLeads(); }, [showLanding]);
+
   const addLead = async (form) => {
     try {
       const res = await fetch(`${API}/leads`, {
@@ -110,27 +114,37 @@ useEffect(() => { fetchLeads(); }, []);
     color: STATUS_COLORS_MAP[s],
   }));
 
-
-
-
   const exportCSV = () => {
-  const headers = ["ID", "Name", "Email", "Company", "Status", "Deal Value"];
-  const rows = leads.map((l) => [
-    l.id, l.name, l.email, l.company, l.status, l.dealValue || 0
-  ]);
-  const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "leads.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-};
+    const headers = ["ID", "Name", "Email", "Company", "Status", "Deal Value"];
+    const rows = leads.map((l) => [l.id, l.name, l.email, l.company, l.status, l.dealValue || 0]);
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "leads.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleNavClick = (tabId) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false); // close sidebar after navigation
+  };
+
+  if (showLanding) {
+    return <LandingPage onEnter={() => setShowLanding(false)} />;
+  }
+
   return (
     <div className="app-layout">
+      {/* Overlay when sidebar is open */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-brand">
           <div className="brand-name">CRM Lite</div>
           <div className="brand-sub">Sales Pipeline</div>
@@ -145,12 +159,21 @@ useEffect(() => { fetchLeads(); }, []);
             <button
               key={item.id}
               className={`nav-item ${activeTab === item.id ? "active" : ""}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => handleNavClick(item.id)}
             >
               <span className="nav-icon">{item.icon}</span>
               {item.label}
             </button>
           ))}
+
+          <button
+            className="nav-item"
+            onClick={() => { setSidebarOpen(false); setShowLanding(true); }}
+            style={{ marginTop: "auto" }}
+          >
+            <span className="nav-icon">🏠</span>
+            Home
+          </button>
         </nav>
 
         <div className="sidebar-pipeline">
@@ -172,31 +195,38 @@ useEffect(() => { fetchLeads(); }, []);
           <div className={`toast toast-${toast.type}`}>{toast.msg}</div>
         )}
 
-        <div className="page-header">
-          <h1 className="page-title">
+        {/* Top bar with hamburger */}
+        <div className="topbar">
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <span className={`ham-line ${sidebarOpen ? "ham-open" : ""}`} />
+            <span className={`ham-line ${sidebarOpen ? "ham-open" : ""}`} />
+            <span className={`ham-line ${sidebarOpen ? "ham-open" : ""}`} />
+          </button>
+          <div className="topbar-title">
             {activeTab === "leads" ? "All Leads" : activeTab === "add" ? "Add New Lead" : "Analytics"}
-          </h1>
-      <div className="page-header-row">
-  <p className="page-sub">{leads.length} total leads in your pipeline</p>
-  {activeTab === "leads" && (
-    <button className="btn-export" onClick={exportCSV}>⬇ Export CSV</button>
-  )}
-</div>    
-    </div>
+          </div>
+          {activeTab === "leads" && (
+            <button className="btn-export" onClick={exportCSV}>⬇ Export CSV</button>
+          )}
+        </div>
+
+        <div className="page-header">
+          <p className="page-sub">{leads.length} total leads in your pipeline</p>
+        </div>
 
         {/* Analytics Tab */}
         {activeTab === "stats" && (
           <div className="stats-section">
             <div className="stat-grid">
               {[
-                { label: "Total Leads",  value: leads.length,               icon: "👥", cls: "purple" },
-                { label: "Prospect",     value: counts["PROSPECT"] || 0,    icon: "🔵", cls: "blue"   },
-                { label: "Qualified",    value: counts["QUALIFIED"] || 0,   icon: "🟠", cls: "orange" },
-                { label: "Proposal",     value: counts["PROPOSAL"] || 0,    icon: "🟣", cls: "purple" },
-                { label: "Closed Won",   value: counts["CLOSED WON"] || 0,  icon: "🟢", cls: "green"  },
-                { label: "Closed Lost",  value: counts["CLOSED LOST"] || 0, icon: "🔴", cls: "red"    },
+                { label: "Total Leads",  value: leads.length,               icon: "👥" },
+                { label: "Prospect",     value: counts["PROSPECT"] || 0,    icon: "🔵" },
+                { label: "Qualified",    value: counts["QUALIFIED"] || 0,   icon: "🟠" },
+                { label: "Proposal",     value: counts["PROPOSAL"] || 0,    icon: "🟣" },
+                { label: "Closed Won",   value: counts["CLOSED WON"] || 0,  icon: "🟢" },
+                { label: "Closed Lost",  value: counts["CLOSED LOST"] || 0, icon: "🔴" },
               ].map((s) => (
-                <div key={s.label} className={`stat-card stat-${s.cls}`}>
+                <div key={s.label} className="stat-card">
                   <div className="stat-icon">{s.icon}</div>
                   <div className="stat-value">{s.value}</div>
                   <div className="stat-label">{s.label}</div>
@@ -238,15 +268,17 @@ useEffect(() => { fetchLeads(); }, []);
             </div>
 
             <div className="conversion-card">
-              <div className="conversion-title">Conversion Rate</div>
-              <div className="conversion-rate">
-                {leads.length ? Math.round(((counts["CLOSED WON"] || 0) / leads.length) * 100) : 0}%
-              </div>
-              <div className="conversion-sub">
-                {counts["CLOSED WON"] || 0} of {leads.length} leads closed won
-              </div>
-              <div className="total-deal">
-                Total Pipeline Value: ₹{leads.reduce((sum, l) => sum + (Number(l.dealValue) || 0), 0).toLocaleString()}
+              <div>
+                <div className="conversion-title">Conversion Rate</div>
+                <div className="conversion-rate">
+                  {leads.length ? Math.round(((counts["CLOSED WON"] || 0) / leads.length) * 100) : 0}%
+                </div>
+                <div className="conversion-sub">
+                  {counts["CLOSED WON"] || 0} of {leads.length} leads closed won
+                </div>
+                <div className="total-deal">
+                  Total Pipeline Value: ₹{leads.reduce((sum, l) => sum + (Number(l.dealValue) || 0), 0).toLocaleString()}
+                </div>
               </div>
             </div>
           </div>
