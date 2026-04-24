@@ -93,17 +93,25 @@ export default function AuthModal({ onClose, initialMode = "login" }) {
     try {
       const endpoint = isLogin ? `${API}/auth/login` : `${API}/auth/register`;
       const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }),
+});
 
-      const data = await res.json();
+const text = await res.text();
 
-      if (!res.ok) {
-        throw new Error(data?.message || (isLogin ? "Invalid credentials." : "Registration failed."));
-      }
+let data = {};
+try {
+  data = text ? JSON.parse(text) : {};
+} catch {
+  data = {};
+}
 
+if (!res.ok) {
+  throw new Error(
+    data?.message || data?.error || (isLogin ? "Invalid credentials." : "Registration failed.")
+  );
+}
       // success
       setSuccess(isLogin ? "Welcome back! Signing you in…" : "Account created! Signing you in…");
       login(data.token, data.user || { email });

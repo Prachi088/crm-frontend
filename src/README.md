@@ -79,7 +79,7 @@ spring.datasource.password=YOUR_PASSWORD
 # 5. Run the Spring Boot application
 ./mvnw spring-boot:run
 
-# Backend runs at http://localhost:8080
+# Backend runs at https://crm-backend-8ir9.onrender.com
 ```
 
 ### Frontend Setup
