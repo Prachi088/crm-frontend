@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp,
   Mail, Building2, DollarSign, StickyNote, Users,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const API = process.env.REACT_APP_API_URL;
 const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
@@ -17,19 +18,20 @@ const STATUS_COLORS = {
   "CLOSED WON":  { bg: "#F0FDF4", text: "#15803D", dot: "#22C55E" },
   "CLOSED LOST": { bg: "#FFF1F2", text: "#BE123C", dot: "#F43F5E" },
 };
+
 const AVATAR_COLORS = ["#6366F1","#F97316","#22C55E","#F43F5E","#0EA5E9","#A855F7"];
+
 function getLeadPriority(lead) {
-  const now = new Date();
+  const now     = new Date();
   const created = new Date(lead.createdAt || Date.now());
+  const days    = (now - created) / (1000 * 60 * 60 * 24);
 
-  const days = (now - created) / (1000 * 60 * 60 * 24);
-
-  if (lead.dealValue > 50000) return { label: "High Value", color: "#22C55E" };
-  if (days > 7) return { label: "Stale", color: "#EF4444" };
-  if (days > 3) return { label: "Needs Attention", color: "#F59E0B" };
-
+  if (lead.dealValue > 50000) return { label: "High Value",      color: "#22C55E" };
+  if (days > 7)               return { label: "Stale",           color: "#EF4444" };
+  if (days > 3)               return { label: "Needs Attention", color: "#F59E0B" };
   return null;
 }
+
 // ── Avatar ────────────────────────────────────────────────────────
 function Avatar({ name }) {
   const initials = name
@@ -59,27 +61,37 @@ function Badge({ status }) {
 }
 
 // ── Notes ─────────────────────────────────────────────────────────
-function Notes({ leadId }) {
-  const [notes, setNotes]   = useState([]);
-  const [text, setText]     = useState("");
-  const [open, setOpen]     = useState(false);
+function Notes({ leadId, leadOwnerId, currentUserId }) {
+  const [notes, setNotes] = useState([]);
+  const [text, setText]   = useState("");
+  const [open, setOpen]   = useState(false);
+
+  // current user is owner of this lead
+  const isOwner = Boolean(currentUserId && leadOwnerId && currentUserId === leadOwnerId);
 
   const fetchNotes = useCallback(async () => {
     try {
-      const res  = await fetch(`${API}/notes/lead/${leadId}`);
+      const token = localStorage.getItem("token");
+      const res   = await fetch(`${API}/notes/lead/${leadId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
-      setNotes(data);
+      setNotes(Array.isArray(data) ? data : []);
     } catch {}
   }, [leadId]);
 
   useEffect(() => { if (open) fetchNotes(); }, [open, fetchNotes]);
 
   const addNote = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !isOwner) return;
     try {
+      const token = localStorage.getItem("token");
       await fetch(`${API}/notes/lead/${leadId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ content: text }),
       });
       setText("");
@@ -88,8 +100,13 @@ function Notes({ leadId }) {
   };
 
   const deleteNote = async (id) => {
+    if (!isOwner) return;
     try {
-      await fetch(`${API}/notes/${id}`, { method: "DELETE" });
+      const token = localStorage.getItem("token");
+      await fetch(`${API}/notes/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setNotes((n) => n.filter((x) => x.id !== id));
     } catch {}
   };
@@ -99,58 +116,68 @@ function Notes({ leadId }) {
       <button className="btn-notes" onClick={() => setOpen(!open)}>
         <StickyNote size={13} strokeWidth={2} />
         {open ? "Hide Notes" : `Notes (${notes.length})`}
-        {open ? <ChevronUp size={12} strokeWidth={2.5} /> : <ChevronDown size={12} strokeWidth={2.5} />}
+        {open
+          ? <ChevronUp size={12} strokeWidth={2.5} />
+          : <ChevronDown size={12} strokeWidth={2.5} />}
       </button>
 
       {open && (
         <div className="notes-body">
-          <div className="notes-input-row">
-            <input
-              className="form-input notes-input"
-              placeholder="Add a note…"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addNote()}
-            />
-            <button className="btn-add-note" onClick={addNote}>
-              <MessageSquarePlus size={14} strokeWidth={2} />
-              Add
-            </button>
-          </div>
+
+          {/* ── only lead owner sees the add-note input ── */}
+          {isOwner && (
+            <div className="notes-input-row">
+              <input
+                className="form-input notes-input"
+                placeholder="Add a note…"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addNote()}
+              />
+              <button className="btn-add-note" onClick={addNote}>
+                <MessageSquarePlus size={14} strokeWidth={2} />
+                Add
+              </button>
+            </div>
+          )}
+
           {notes.length === 0 ? (
-            <div className="notes-empty">  No activity yet — start by adding a note
-</div>
+            <div className="notes-empty">No activity yet — start by adding a note</div>
           ) : (
             notes.map((note) => (
-             <div key={note.id} className="note-item" style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+              <div
+                key={note.id}
+                className="note-item"
+                style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}
+              >
+                {/* timeline dot */}
+                <div style={{
+                  width: "8px", height: "8px", borderRadius: "50%",
+                  background: "#6366F1", marginTop: "6px", flexShrink: 0,
+                }} />
 
-  {/* timeline dot */}
-  <div style={{
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    background: "#6366F1",
-    marginTop: "6px"
-  }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                    {note.createdBy?.email && (
+                      <span style={{ fontWeight: 600, marginRight: 6 }}>
+                        {note.createdBy.email}
+                      </span>
+                    )}
+                    {new Date(note.createdAt || Date.now()).toLocaleString()}
+                  </div>
+                  <div className="note-content">{note.content}</div>
+                </div>
 
-  <div style={{ flex: 1 }}>
-    <div style={{ fontSize: "12px", color: "#6B7280" }}>
-      {new Date(note.createdAt || Date.now()).toLocaleString()}
-    </div>
-
-    <div className="note-content">
-      {note.content}
-    </div>
-  </div>
-
-  <button
-    className="btn-delete-note"
-    onClick={() => deleteNote(note.id)}
-  >
-    <X size={14} strokeWidth={2.5} />
-  </button>
-
-</div>
+                {/* ── only lead owner can delete notes ── */}
+                {isOwner && (
+                  <button
+                    className="btn-delete-note"
+                    onClick={() => deleteNote(note.id)}
+                  >
+                    <X size={14} strokeWidth={2.5} />
+                  </button>
+                )}
+              </div>
             ))
           )}
         </div>
@@ -189,6 +216,7 @@ function DeleteButton({ onDelete }) {
 
 // ── LeadList ──────────────────────────────────────────────────────
 function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onDelete, onUpdate, onRequestAuth }) {
+  const { user: currentUser } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm]   = useState({});
   const listRef = useRef(null);
@@ -215,16 +243,18 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
   };
 
   const handleDelete = async (id, cardEl) => {
-    // Slide-out animation before removing
     if (cardEl) {
-      await gsap.to(cardEl, { opacity: 0, x: 20, height: 0, marginBottom: 0, duration: 0.28, ease: "power2.in" });
+      await gsap.to(cardEl, {
+        opacity: 0, x: 20, height: 0, marginBottom: 0,
+        duration: 0.28, ease: "power2.in",
+      });
     }
     onDelete(id);
   };
 
   return (
     <div>
-      {/* Filter bar — unchanged structure */}
+      {/* Filter bar */}
       <div className="filter-bar">
         <div className="search-wrap">
           <span className="search-icon">
@@ -259,39 +289,22 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
       </div>
 
       {leads.length === 0 ? (
-        <div className="empty-state">
+        <div className="empty-state" style={{ textAlign: "center", padding: "40px" }}>
           <div className="empty-icon">
             <Users size={40} strokeWidth={1.2} />
           </div>
-
-<div className="empty-state" style={{ textAlign: "center", padding: "40px" }}>
-
-  <h3 style={{ marginBottom: "10px" }}>No leads yet</h3>
-
-  <p style={{ color: "#6B7280", marginBottom: "20px" }}>
-    Start by adding your first lead to track opportunities
-  </p>
-
-  <button
-    className="btn-icon-text"
-    onClick={() => onRequestAuth?.()}
-  >
-    + Add Lead
-  </button>
-
-  <button
-    className="btn-icon-text"
-    style={{ marginTop: "12px" }}
-    onClick={() => onRequestAuth?.()}
-  >
-    Sign In to Add Leads
-  </button>
-
-</div>
+          <h3 style={{ marginBottom: "10px" }}>No leads yet</h3>
+          <p style={{ color: "#6B7280", marginBottom: "20px" }}>
+            Start by adding your first lead to track opportunities
+          </p>
+          <button className="btn-icon-text" onClick={() => onRequestAuth?.()}>
+            + Add Lead
+          </button>
           <button
             className="btn-icon-text"
             style={{ marginTop: "12px" }}
-           onClick={() => onRequestAuth?.()}          >
+            onClick={() => onRequestAuth?.()}
+          >
             Sign In to Add Leads
           </button>
         </div>
@@ -349,27 +362,21 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
                     <div className="lead-row">
                       <Avatar name={lead.name} />
                       <div className="lead-info">
-                    <div className="lead-name">
-                               {lead.name}
-
-                       {(() => {
-    const priority = getLeadPriority(lead);
-    return priority ? (
-      <span
-        style={{
-          marginLeft: "8px",
-          padding: "2px 8px",
-          fontSize: "10px",
-          borderRadius: "6px",
-          background: priority.color,
-          color: "#fff"
-        }}
-      >
-        {priority.label}
-      </span>
-    ) : null;
-  })()}
-</div>
+                        <div className="lead-name">
+                          {lead.name}
+                          {(() => {
+                            const priority = getLeadPriority(lead);
+                            return priority ? (
+                              <span style={{
+                                marginLeft: "8px", padding: "2px 8px",
+                                fontSize: "10px", borderRadius: "6px",
+                                background: priority.color, color: "#fff",
+                              }}>
+                                {priority.label}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
                         <div className="lead-email">
                           <Mail size={11} strokeWidth={2} style={{ opacity: 0.5 }} />
                           {lead.email}
@@ -399,7 +406,13 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
                         <DeleteButton onDelete={() => handleDelete(lead.id, cardRef.current)} />
                       </div>
                     </div>
-                    <Notes leadId={lead.id} />
+
+                    {/* Notes — pass owner + currentUser for security */}
+                    <Notes
+                      leadId={lead.id}
+                      leadOwnerId={lead.owner?.id}
+                      currentUserId={currentUser?.id}
+                    />
                   </div>
                 )}
               </div>
