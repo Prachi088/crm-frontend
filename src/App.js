@@ -32,6 +32,7 @@ import {
   CheckCircle,
   AlertCircle,
   UserCircle,
+  Info,
 } from "lucide-react";
 import LeadForm from "./components/LeadForm";
 import LeadList from "./components/LeadList";
@@ -39,6 +40,8 @@ import ProfilePage from "./components/ProfilePage";
 import LandingPage from "./LandingPage";
 import ChatBox from "./ChatBox";
 import TermsModal from "./TermsModal";
+import AboutPage from "./AboutPage";
+import GlobalFooter from "./Footer";
 import "./App.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -60,6 +63,7 @@ const NAV_ITEMS = [
   { id: "add",     Icon: PlusCircle,  label: "Add Lead" },
   { id: "stats",   Icon: BarChart2,   label: "Analytics" },
   { id: "profile", Icon: UserCircle,  label: "My Profile" },
+  { id: "about",   Icon: Info,        label: "About" },
 ];
 
 // ── helper: auth headers ──────────────────────────────────────────
@@ -303,20 +307,20 @@ function LoadingSkeleton() {
 /* MAIN APP                                    */
 /* ─────────────────────────────────────────── */
 export default function App() {
-  const [leads, setLeads]             = useState([]);
-  const [activeTab, setActiveTab]     = useState("leads");
-  const [search, setSearch]           = useState("");
+  const [leads, setLeads]               = useState([]);
+  const [activeTab, setActiveTab]       = useState("leads");
+  const [search, setSearch]             = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const [isLoading, setIsLoading]     = useState(true);
-  const [toast, setToast]             = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [theme, setTheme]             = useState(() => localStorage.getItem("crm-theme") || "light");
-  const [showLanding, setShowLanding] = useState(true);
-  const [showTerms, setShowTerms]     = useState(false);
-  const [showAuth, setShowAuth]       = useState(false);
-  const { token, logout }             = useAuth();
-  const hamburgerRef                  = useRef(null);
-  const navItemRefs                   = useRef({});
+  const [isLoading, setIsLoading]       = useState(true);
+  const [toast, setToast]               = useState(null);
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [theme, setTheme]               = useState(() => localStorage.getItem("crm-theme") || "light");
+  const [showLanding, setShowLanding]   = useState(true);
+  const [showTerms, setShowTerms]       = useState(false);
+  const [showAuth, setShowAuth]         = useState(false);
+  const { token, user, logout }         = useAuth();
+  const hamburgerRef                    = useRef(null);
+  const navItemRefs                     = useRef({});
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -327,12 +331,10 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // ── fetch leads — public, no auth needed ─────────────────────
+  // ── fetch leads ───────────────────────────────────────────────
   const fetchLeads = useCallback(async () => {
     try {
-      const res  = await fetch(`${API}/leads`, {
-        headers: authHeaders(),
-      });
+      const res  = await fetch(`${API}/leads`, { headers: authHeaders() });
       const data = await res.json();
       setLeads(Array.isArray(data) ? data : []);
     } catch {
@@ -360,26 +362,26 @@ export default function App() {
     }, 100);
   }, [showLanding]);
 
-  // ── add lead — requires JWT ───────────────────────────────────
+  // ── add lead ──────────────────────────────────────────────────
   const addLead = useCallback(async (form) => {
-  try {
-    const res = await fetch(`${API}/leads`, {
-      method:  "POST",
-      headers: authHeaders(),
-      body:    JSON.stringify(form),
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || errData.error || "Failed to add lead");
+    try {
+      const res = await fetch(`${API}/leads`, {
+        method:  "POST",
+        headers: authHeaders(),
+        body:    JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || errData.error || "Failed to add lead");
+      }
+      await fetchLeads();
+      showToast("Lead added!");
+      return true;
+    } catch (err) {
+      showToast(err.message || "Failed to add lead", "error");
+      return false;
     }
-    await fetchLeads();
-    showToast("Lead added!");
-    return true;
-  } catch (err) {
-    showToast(err.message || "Failed to add lead", "error");
-    return false;
-  }
-}, [fetchLeads, showToast]);
+  }, [fetchLeads, showToast]);
 
   const filtered = useMemo(() => leads.filter((l) => {
     const q           = search.toLowerCase();
@@ -429,11 +431,55 @@ export default function App() {
     hamburgerRef.current?.classList.remove("ham-open");
   }, [token]);
 
-  const TAB_TITLES = { leads: "All Leads", add: "Add New Lead", stats: "Analytics", profile: "My Profile" };
-  const TAB_ICONS  = { leads: Users, add: PlusCircle, stats: BarChart2, profile: UserCircle };
+  // Footer nav handler — maps footer nav ids to tab ids
+  const handleFooterNav = useCallback((target) => {
+    if (target === "landing") {
+      setShowLanding(true);
+      return;
+    }
+    const tabMap = { leads: "leads", analytics: "stats", about: "about" };
+    const tabId = tabMap[target];
+    if (tabId) setActiveTab(tabId);
+  }, []);
+
+  const TAB_TITLES = {
+    leads:   "All Leads",
+    add:     "Add New Lead",
+    stats:   "Analytics",
+    profile: "My Profile",
+    about:   "About",
+  };
+  const TAB_ICONS = {
+    leads:   Users,
+    add:     PlusCircle,
+    stats:   BarChart2,
+    profile: UserCircle,
+    about:   Info,
+  };
+
+  // Footer page mapping
+  const footerPageMap = {
+    leads:   "leads",
+    add:     "leads",
+    stats:   "analytics",
+    profile: "profile",
+    about:   "about",
+  };
 
   if (showLanding) {
-    return <LandingPage onEnter={() => setShowLanding(false)} />;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        <LandingPage onEnter={() => setShowLanding(false)} />
+        <GlobalFooter
+          page="landing"
+          onNavigate={(target) => {
+            if (target === "landing") return;
+            setShowLanding(false);
+            handleFooterNav(target);
+          }}
+        />
+      </div>
+    );
   }
 
   const TabIcon = TAB_ICONS[activeTab];
@@ -519,7 +565,7 @@ export default function App() {
       </aside>
 
       {/* Main */}
-      <main className="main-content">
+      <main className="main-content" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         {/* Toast */}
         {toast && (
           <div className={`toast toast-${toast.type}`} role="alert">
@@ -585,18 +631,22 @@ export default function App() {
           </div>
         </div>
 
-        {/* Page subtitle */}
-        <div className="page-header">
-          <p className="page-sub">
-            {leads.length === 0
-              ? "No leads yet — add your first to get started."
-              : `${leads.length} ${leads.length === 1 ? "lead" : "leads"} in your pipeline`}
-          </p>
-        </div>
+        {/* Page subtitle — hide on about page */}
+        {activeTab !== "about" && (
+          <div className="page-header">
+            <p className="page-sub">
+              {leads.length === 0
+                ? "No leads yet — add your first to get started."
+                : `${leads.length} ${leads.length === 1 ? "lead" : "leads"} in your pipeline`}
+            </p>
+          </div>
+        )}
 
         {/* Content */}
-        <div className="content-wrapper">
-          {isLoading ? (
+        <div className="content-wrapper" style={{ flex: 1 }}>
+          {activeTab === "about" ? (
+            <AboutPage />
+          ) : isLoading ? (
             <LoadingSkeleton />
           ) : activeTab === "stats" ? (
             <AnalyticsSection leads={leads} />
@@ -633,11 +683,18 @@ export default function App() {
             />
           )}
         </div>
+
+        {/* Global Footer on every page */}
+        <GlobalFooter
+          page={footerPageMap[activeTab] || "default"}
+          leadsCount={leads.length}
+          user={user}
+          onNavigate={handleFooterNav}
+        />
       </main>
 
       <ChatBox leads={leads} />
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
-
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
