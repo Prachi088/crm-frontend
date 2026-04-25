@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import gsap from "gsap";
 import {
-  Search, Filter, Pencil, Trash2,
-  Check, X, MessageSquarePlus,
+  Search, Filter,
+  X, MessageSquarePlus,
   ChevronDown, ChevronUp,
   Mail, Building2, DollarSign, StickyNote, Users,
 } from "lucide-react";
@@ -223,40 +223,9 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
   );
 }
 
-// ── DeleteButton with confirm state ──────────────────────────────
-function DeleteButton({ onDelete }) {
-  const [confirming, setConfirming] = useState(false);
-  const timerRef = useRef(null);
-
-  const handleClick = () => {
-    if (!confirming) {
-      setConfirming(true);
-      timerRef.current = setTimeout(() => setConfirming(false), 2500);
-    } else {
-      clearTimeout(timerRef.current);
-      onDelete();
-    }
-  };
-  useEffect(() => () => clearTimeout(timerRef.current), []);
-
-  return (
-    <button
-      className={`btn-delete${confirming ? " btn-delete--confirm" : ""}`}
-      onClick={handleClick}
-      title={confirming ? "Click again to confirm" : "Delete lead"}
-    >
-      <Trash2 size={12} strokeWidth={2.5} />
-      {confirming ? "Confirm?" : "Delete"}
-    </button>
-  );
-}
-
 // ── LeadList ──────────────────────────────────────────────────────
-function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onDelete, onUpdate, onRequestAuth }) {
+function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onRequestAuth }) {
   const { user: currentUser } = useAuth();
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm]   = useState({});
-  const [saving, setSaving]       = useState(false);
   const listRef = useRef(null);
 
   // Animate cards in on initial render / filter change
@@ -269,45 +238,6 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
       { opacity: 1, y: 0, duration: 0.3, stagger: 0.05, ease: "power2.out" }
     );
   }, [leads.length]);
-
-  const startEdit = (lead) => {
-    setEditingId(lead.id);
-    // FIX: only copy the fields the backend expects — do NOT spread the whole lead
-    // object (which includes nested `owner` object). The backend's Lead entity has
-    // setOwner() but the owner should never change on update. Sending nested owner
-    // caused Jackson deserialization issues → 400 → "Failed to update".
-    setEditForm({
-      name:      lead.name      || "",
-      email:     lead.email     || "",
-      company:   lead.company   || "",
-      dealValue: lead.dealValue || "",
-      status:    lead.status    || "PROSPECT",
-    });
-  };
-
-  const saveEdit = async () => {
-    setSaving(true);
-    // FIX: cast dealValue to a number before sending.
-    // Previously `e.target.value` kept it as a string → backend received "50000"
-    // (string) instead of 50000 (number) → Jackson parse error → 400 Bad Request.
-    const payload = {
-      ...editForm,
-      dealValue: editForm.dealValue ? parseFloat(editForm.dealValue) : null,
-    };
-    const ok = await onUpdate(editingId, payload);
-    setSaving(false);
-    if (ok) setEditingId(null);
-  };
-
-  const handleDelete = async (id, cardEl) => {
-    if (cardEl) {
-      await gsap.to(cardEl, {
-        opacity: 0, x: 20, height: 0, marginBottom: 0,
-        duration: 0.28, ease: "power2.in",
-      });
-    }
-    onDelete(id);
-  };
 
   return (
     <div>
@@ -373,54 +303,9 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
             // FIX: compute isOwner per lead using == (loose equality) to handle
             // number vs number comparison safely across JSON serialization.
             // eslint-disable-next-line eqeqeq
-const isLeadOwner = currentUser && (!lead.owner || currentUser.id == lead.owner.id);
             return (
               <div key={lead.id} className="lead-card" ref={cardRef}>
-                {editingId === lead.id ? (
-                  <div className="edit-form">
-                    {["name", "email", "company"].map((f) => (
-                      <input
-                        key={f}
-                        className="form-input"
-                        placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
-                        value={editForm[f] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setEditForm((prev) => ({ ...prev, [f]: val }));
-                        }}
-                      />
-                    ))}
-                    <input
-                      className="form-input"
-                      type="number"
-                      placeholder="Deal Value (₹)"
-                      value={editForm.dealValue || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setEditForm((prev) => ({ ...prev, dealValue: val }));
-                      }}
-                    />
-                    <select
-                      className="form-input"
-                      value={editForm.status}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setEditForm((prev) => ({ ...prev, status: val }));
-                      }}
-                    >
-                      {STATUSES.map((s) => <option key={s}>{s}</option>)}
-                    </select>
-                    <div className="edit-actions">
-                      <button className="btn-save" onClick={saveEdit} disabled={saving}>
-                        <Check size={13} strokeWidth={2.5} /> {saving ? "Saving…" : "Save"}
-                      </button>
-                      <button className="btn-cancel" onClick={() => setEditingId(null)} disabled={saving}>
-                        <X size={13} strokeWidth={2.5} /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
+                <div>
                     <div className="lead-row">
                       <Avatar name={lead.name} />
                       <div className="lead-info">
@@ -457,22 +342,6 @@ const isLeadOwner = currentUser && (!lead.owner || currentUser.id == lead.owner.
                         )}
                       </div>
                       <Badge status={lead.status} />
-
-                      {/* FIX: only show Edit/Delete buttons if current user owns this lead */}
-                      <div className="lead-actions">
-                        {isLeadOwner && (
-                          <>
-                            <button
-                              className="btn-edit"
-                              onClick={() => startEdit(lead)}
-                              title="Edit lead"
-                            >
-                              <Pencil size={12} strokeWidth={2.5} /> Edit
-                            </button>
-                            <DeleteButton onDelete={() => handleDelete(lead.id, cardRef.current)} />
-                          </>
-                        )}
-                      </div>
                     </div>
 
                     {/* Notes — pass owner + currentUser for security */}
@@ -482,8 +351,7 @@ const isLeadOwner = currentUser && (!lead.owner || currentUser.id == lead.owner.
                       currentUserId={currentUser?.id}
                     />
                   </div>
-                )}
-              </div>
+                </div>
             );
           })}
         </div>

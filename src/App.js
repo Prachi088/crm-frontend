@@ -378,39 +378,6 @@ export default function App() {
     }
   }, [fetchLeads, showToast]);
 
-  // ── delete lead — requires JWT ────────────────────────────────
-  const deleteLead = useCallback(async (id) => {
-    try {
-      const res = await fetch(`${API}/leads/${id}`, {
-        method:  "DELETE",
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error();
-      setLeads((prev) => prev.filter((l) => l.id !== id));
-      showToast("Lead deleted");
-    } catch {
-      showToast("Failed to delete", "error");
-    }
-  }, [showToast]);
-
-  // ── update lead — requires JWT ────────────────────────────────
-  const updateLead = useCallback(async (id, form) => {
-    try {
-      const res = await fetch(`${API}/leads/${id}`, {
-        method:  "PUT",
-        headers: authHeaders(),
-        body:    JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error();
-      await fetchLeads();
-      showToast("Lead updated!");
-      return true;
-    } catch {
-      showToast("Failed to update", "error");
-      return false;
-    }
-  }, [fetchLeads, showToast]);
-
   const filtered = useMemo(() => leads.filter((l) => {
     const q           = search.toLowerCase();
     const matchSearch =
@@ -659,8 +626,6 @@ export default function App() {
               setSearch={setSearch}
               filterStatus={filterStatus}
               setFilterStatus={setFilterStatus}
-              onDelete={deleteLead}
-              onUpdate={updateLead}
               onRequestAuth={() => setShowAuth(true)}
             />
           )}
