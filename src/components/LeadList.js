@@ -71,9 +71,10 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
   // FIX: use loose equality (==) to handle number vs string type mismatch from JSON.
   // Also treat any logged-in user as able to attempt adding — backend enforces ownership.
   // eslint-disable-next-line eqeqeq
-  const isOwner = Boolean(currentUserId && leadOwnerId && currentUserId == leadOwnerId);
-  // Any logged-in user can see the input; backend will reject non-owners with 403
   const isLoggedIn = Boolean(currentUserId);
+// If owner info available from backend, compare; otherwise allow any logged-in user
+// eslint-disable-next-line eqeqeq
+const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true);
 
   const fetchNotes = useCallback(async () => {
     try {
