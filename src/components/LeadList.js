@@ -68,10 +68,12 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
   const [adding, setAdding]   = useState(false);
   const [noteError, setNoteError] = useState("");
 
-  // FIX: both ids come as numbers from JSON — use == (loose) to avoid type mismatch
-  // between a number stored in state vs a number from the API response.
+  // FIX: use loose equality (==) to handle number vs string type mismatch from JSON.
+  // Also treat any logged-in user as able to attempt adding — backend enforces ownership.
   // eslint-disable-next-line eqeqeq
   const isOwner = Boolean(currentUserId && leadOwnerId && currentUserId == leadOwnerId);
+  // Any logged-in user can see the input; backend will reject non-owners with 403
+  const isLoggedIn = Boolean(currentUserId);
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -153,21 +155,27 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
       {open && (
         <div className="notes-body">
 
-          {/* ── only lead owner sees the add-note input ── */}
-          {isOwner && (
+          {/* ── show add-note input for logged-in users; backend enforces ownership ── */}
+          {isLoggedIn ? (
             <div className="notes-input-row">
               <input
                 className="form-input notes-input"
-                placeholder="Add a note…"
+                placeholder={isOwner ? "Add a note…" : "Only the lead owner can add notes"}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => { setText(e.target.value); setNoteError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && addNote()}
-                disabled={adding}
+                disabled={adding || !isOwner}
+                style={!isOwner ? { opacity: 0.5, cursor: "not-allowed" } : {}}
               />
-              <button className="btn-add-note" onClick={addNote} disabled={adding}>
+              <button className="btn-add-note" onClick={addNote} disabled={adding || !isOwner}
+                style={!isOwner ? { opacity: 0.5, cursor: "not-allowed" } : {}}>
                 <MessageSquarePlus size={14} strokeWidth={2} />
                 {adding ? "Adding…" : "Add"}
               </button>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>
+              Sign in to add notes
             </div>
           )}
 
@@ -348,7 +356,7 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onR
                     <Notes
                       leadId={lead.id}
                       leadOwnerId={lead.owner?.id}
-                      currentUserId={currentUser?.id}
+                      currentUserId={currentUser?.id ?? currentUser?.userId}
                     />
                   </div>
                 </div>
