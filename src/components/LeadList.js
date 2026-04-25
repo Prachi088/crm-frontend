@@ -373,8 +373,7 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
             // FIX: compute isOwner per lead using == (loose equality) to handle
             // number vs number comparison safely across JSON serialization.
             // eslint-disable-next-line eqeqeq
-            const isLeadOwner = currentUser && lead.owner && currentUser.id == lead.owner.id;
-
+const isLeadOwner = currentUser && (!lead.owner || currentUser.id == lead.owner.id);
             return (
               <div key={lead.id} className="lead-card" ref={cardRef}>
                 {editingId === lead.id ? (
