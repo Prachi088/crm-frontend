@@ -5,6 +5,7 @@ import {
   X, MessageSquarePlus,
   ChevronDown, ChevronUp,
   Mail, Building2, DollarSign, StickyNote, Users,
+  Pencil, Check,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -32,7 +33,6 @@ function getLeadPriority(lead) {
   return null;
 }
 
-// ── Avatar ────────────────────────────────────────────────────────
 function Avatar({ name }) {
   const initials = name
     ? name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -49,7 +49,6 @@ function Avatar({ name }) {
   );
 }
 
-// ── Badge ─────────────────────────────────────────────────────────
 function Badge({ status }) {
   const c = STATUS_COLORS[status] || { bg: "#F1F5F9", text: "#64748B", dot: "#94A3B8" };
   return (
@@ -61,39 +60,38 @@ function Badge({ status }) {
 }
 
 // ── Notes ─────────────────────────────────────────────────────────
-function Notes({ leadId, leadOwnerId, currentUserId }) {
-  const [notes, setNotes]     = useState([]);
-  const [text, setText]       = useState("");
-  const [open, setOpen]       = useState(false);
-  const [adding, setAdding]   = useState(false);
+function Notes({ leadId, currentUserId }) {
+  const [notes, setNotes]         = useState([]);
+  const [text, setText]           = useState("");
+  const [open, setOpen]           = useState(false);
+  const [adding, setAdding]       = useState(false);
   const [noteError, setNoteError] = useState("");
 
-  // FIX: use loose equality (==) to handle number vs string type mismatch from JSON.
-  // Also treat any logged-in user as able to attempt adding — backend enforces ownership.
-  // eslint-disable-next-line eqeqeq
+  // edit state
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText]   = useState("");
+  const [saving, setSaving]       = useState(false);
+
   const isLoggedIn = Boolean(currentUserId);
-// If owner info available from backend, compare; otherwise allow any logged-in user
-// eslint-disable-next-line eqeqeq
-const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true);
 
   const fetchNotes = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res   = await fetch(`${API}/notes/lead/${leadId}`, { headers });
+      const res = await fetch(`${API}/notes/lead/${leadId}`, { headers });
       if (!res.ok) return;
       const data = await res.json();
       setNotes(Array.isArray(data) ? data : []);
     } catch {}
   }, [leadId]);
 
-  // FIX: fetch notes when panel opens AND whenever leadId changes
   useEffect(() => {
     if (open) fetchNotes();
   }, [open, fetchNotes]);
 
+  // ── Add note — any logged-in user can add ──────────────────────
   const addNote = async () => {
-    if (!text.trim() || !isOwner || adding) return;
+    if (!text.trim() || !isLoggedIn || adding) return;
     setAdding(true);
     setNoteError("");
     try {
@@ -104,31 +102,71 @@ const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text.trim() }),
       });
 
       if (!res.ok) {
-        // FIX: previously ignored the response — never knew if POST failed.
-        // Now surface the error so the user knows something went wrong.
         const err = await res.json().catch(() => ({}));
         setNoteError(err.message || "Failed to add note");
         return;
       }
 
-      // FIX: append the returned note directly to state instead of refetching.
-      // This makes the note appear instantly without a round-trip.
       const saved = await res.json();
       setNotes((prev) => [...prev, saved]);
       setText("");
     } catch {
-      setNoteError("Network error");
+      setNoteError("Network error — please try again");
     } finally {
       setAdding(false);
     }
   };
 
+  // ── Edit note — only note creator ─────────────────────────────
+  const startEdit = (note) => {
+    setEditingId(note.id);
+    setEditText(note.content);
+    setNoteError("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const saveEdit = async (noteId) => {
+    if (!editText.trim() || saving) return;
+    setSaving(true);
+    setNoteError("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API}/notes/${noteId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: editText.trim() }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setNoteError(err.message || "Failed to edit note");
+        return;
+      }
+
+      const updated = await res.json();
+      setNotes((prev) => prev.map((n) => (n.id === noteId ? updated : n)));
+      setEditingId(null);
+      setEditText("");
+    } catch {
+      setNoteError("Network error — please try again");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Delete note — only note creator ──────────────────────────
   const deleteNote = async (id) => {
-    if (!isOwner) return;
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API}/notes/${id}`, {
@@ -136,7 +174,6 @@ const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        // FIX: optimistic removal — update UI immediately on success
         setNotes((n) => n.filter((x) => x.id !== id));
       }
     } catch {}
@@ -155,20 +192,22 @@ const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true
       {open && (
         <div className="notes-body">
 
-          {/* ── show add-note input for logged-in users; backend enforces ownership ── */}
+          {/* Add note — available to any logged-in user */}
           {isLoggedIn ? (
             <div className="notes-input-row">
               <input
                 className="form-input notes-input"
-                placeholder={isOwner ? "Add a note…" : "Only the lead owner can add notes"}
+                placeholder="Add a note…"
                 value={text}
                 onChange={(e) => { setText(e.target.value); setNoteError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && addNote()}
-                disabled={adding || !isOwner}
-                style={!isOwner ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                disabled={adding}
               />
-              <button className="btn-add-note" onClick={addNote} disabled={adding || !isOwner}
-                style={!isOwner ? { opacity: 0.5, cursor: "not-allowed" } : {}}>
+              <button
+                className="btn-add-note"
+                onClick={addNote}
+                disabled={adding || !text.trim()}
+              >
                 <MessageSquarePlus size={14} strokeWidth={2} />
                 {adding ? "Adding…" : "Add"}
               </button>
@@ -179,7 +218,6 @@ const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true
             </div>
           )}
 
-          {/* Error feedback for note POST failures */}
           {noteError && (
             <div style={{ fontSize: 12, color: "#F43F5E", marginBottom: 6 }}>
               {noteError}
@@ -189,41 +227,93 @@ const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true
           {notes.length === 0 ? (
             <div className="notes-empty">No activity yet — start by adding a note</div>
           ) : (
-            notes.map((note) => (
-              <div
-                key={note.id}
-                className="note-item"
-                style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}
-              >
-                {/* timeline dot */}
-                <div style={{
-                  width: "8px", height: "8px", borderRadius: "50%",
-                  background: "#6366F1", marginTop: "6px", flexShrink: 0,
-                }} />
+            notes.map((note) => {
+              // eslint-disable-next-line eqeqeq
+              const isNoteCreator = currentUserId && note.createdBy?.id == currentUserId;
+              const isEditing = editingId === note.id;
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                    {note.createdBy?.email && (
-                      <span style={{ fontWeight: 600, marginRight: 6 }}>
-                        {note.createdBy.email}
-                      </span>
+              return (
+                <div
+                  key={note.id}
+                  className="note-item"
+                  style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}
+                >
+                  {/* timeline dot */}
+                  <div style={{
+                    width: "8px", height: "8px", borderRadius: "50%",
+                    background: "#6366F1", marginTop: "6px", flexShrink: 0,
+                  }} />
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                      {note.createdBy?.email && (
+                        <span style={{ fontWeight: 600, marginRight: 6 }}>
+                          {note.createdBy.email}
+                        </span>
+                      )}
+                      {new Date(note.createdAt || Date.now()).toLocaleString()}
+                    </div>
+
+                    {/* Inline edit mode */}
+                    {isEditing ? (
+                      <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                        <input
+                          className="form-input notes-input"
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEdit(note.id);
+                            if (e.key === "Escape") cancelEdit();
+                          }}
+                          autoFocus
+                          disabled={saving}
+                          style={{ flex: 1, fontSize: 13 }}
+                        />
+                        <button
+                          className="btn-add-note"
+                          onClick={() => saveEdit(note.id)}
+                          disabled={saving || !editText.trim()}
+                          style={{ padding: "4px 10px" }}
+                        >
+                          <Check size={13} strokeWidth={2.5} />
+                          {saving ? "…" : "Save"}
+                        </button>
+                        <button
+                          className="btn-delete-note"
+                          onClick={cancelEdit}
+                          title="Cancel"
+                        >
+                          <X size={14} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="note-content">{note.content}</div>
                     )}
-                    {new Date(note.createdAt || Date.now()).toLocaleString()}
                   </div>
-                  <div className="note-content">{note.content}</div>
-                </div>
 
-                {/* ── only lead owner can delete notes ── */}
-                {isOwner && (
-                  <button
-                    className="btn-delete-note"
-                    onClick={() => deleteNote(note.id)}
-                  >
-                    <X size={14} strokeWidth={2.5} />
-                  </button>
-                )}
-              </div>
-            ))
+                  {/* Edit + Delete — only for note creator */}
+                  {isNoteCreator && !isEditing && (
+                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                      <button
+                        className="btn-delete-note"
+                        onClick={() => startEdit(note)}
+                        title="Edit note"
+                        style={{ color: "#6366F1" }}
+                      >
+                        <Pencil size={13} strokeWidth={2} />
+                      </button>
+                      <button
+                        className="btn-delete-note"
+                        onClick={() => deleteNote(note.id)}
+                        title="Delete note"
+                      >
+                        <X size={14} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       )}
@@ -236,7 +326,6 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onR
   const { user: currentUser } = useAuth();
   const listRef = useRef(null);
 
-  // Animate cards in on initial render / filter change
   useEffect(() => {
     if (!listRef.current) return;
     const cards = listRef.current.querySelectorAll(".lead-card");
@@ -295,73 +384,58 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onR
           <button className="btn-icon-text" onClick={() => onRequestAuth?.()}>
             + Add Lead
           </button>
-          <button
-            className="btn-icon-text"
-            style={{ marginTop: "12px" }}
-            onClick={() => onRequestAuth?.()}
-          >
-            Sign In to Add Leads
-          </button>
         </div>
       ) : (
         <div className="lead-list" ref={listRef}>
-          {leads.map((lead) => {
-            const cardRef = React.createRef();
-
-            // FIX: compute isOwner per lead using == (loose equality) to handle
-            // number vs number comparison safely across JSON serialization.
-            // eslint-disable-next-line eqeqeq
-            return (
-              <div key={lead.id} className="lead-card" ref={cardRef}>
-                <div>
-                    <div className="lead-row">
-                      <Avatar name={lead.name} />
-                      <div className="lead-info">
-                        <div className="lead-name">
-                          {lead.name}
-                          {(() => {
-                            const priority = getLeadPriority(lead);
-                            return priority ? (
-                              <span style={{
-                                marginLeft: "8px", padding: "2px 8px",
-                                fontSize: "10px", borderRadius: "6px",
-                                background: priority.color, color: "#fff",
-                              }}>
-                                {priority.label}
-                              </span>
-                            ) : null;
-                          })()}
-                        </div>
-                        <div className="lead-email">
-                          <Mail size={11} strokeWidth={2} style={{ opacity: 0.5 }} />
-                          {lead.email}
-                        </div>
-                        {lead.company && (
-                          <div className="lead-company">
-                            <Building2 size={11} strokeWidth={2} style={{ opacity: 0.5 }} />
-                            {lead.company}
-                          </div>
-                        )}
-                        {lead.dealValue && (
-                          <div className="lead-deal">
-                            <DollarSign size={11} strokeWidth={2.5} />
-                            ₹{Number(lead.dealValue).toLocaleString()}
-                          </div>
-                        )}
-                      </div>
-                      <Badge status={lead.status} />
+          {leads.map((lead) => (
+            <div key={lead.id} className="lead-card">
+              <div>
+                <div className="lead-row">
+                  <Avatar name={lead.name} />
+                  <div className="lead-info">
+                    <div className="lead-name">
+                      {lead.name}
+                      {(() => {
+                        const priority = getLeadPriority(lead);
+                        return priority ? (
+                          <span style={{
+                            marginLeft: "8px", padding: "2px 8px",
+                            fontSize: "10px", borderRadius: "6px",
+                            background: priority.color, color: "#fff",
+                          }}>
+                            {priority.label}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
-
-                    {/* Notes — pass owner + currentUser for security */}
-                    <Notes
-                      leadId={lead.id}
-                      leadOwnerId={lead.owner?.id}
-                      currentUserId={currentUser?.id ?? currentUser?.userId}
-                    />
+                    <div className="lead-email">
+                      <Mail size={11} strokeWidth={2} style={{ opacity: 0.5 }} />
+                      {lead.email}
+                    </div>
+                    {lead.company && (
+                      <div className="lead-company">
+                        <Building2 size={11} strokeWidth={2} style={{ opacity: 0.5 }} />
+                        {lead.company}
+                      </div>
+                    )}
+                    {lead.dealValue && (
+                      <div className="lead-deal">
+                        <DollarSign size={11} strokeWidth={2.5} />
+                        ₹{Number(lead.dealValue).toLocaleString()}
+                      </div>
+                    )}
                   </div>
+                  <Badge status={lead.status} />
                 </div>
-            );
-          })}
+
+                {/* Pass currentUserId — notes handles all add/edit/delete logic */}
+                <Notes
+                  leadId={lead.id}
+                  currentUserId={currentUser?.id ?? currentUser?.userId}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

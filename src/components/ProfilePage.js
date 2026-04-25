@@ -13,7 +13,7 @@ function authHeaders() {
 }
 
 export default function ProfilePage() {
-  const { user: currentUser, login } = useAuth();
+  const { user: currentUser, login, logout } = useAuth();
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   // Fetch current user profile on mount
@@ -31,16 +31,24 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await fetch(`${API}/users/me`, { headers: authHeaders() });
-        if (!res.ok) throw new Error();
+
+        // FIX: token expired or invalid — log user out gracefully
+        if (res.status === 401 || res.status === 403) {
+          logout();
+          return;
+        }
+
+        if (!res.ok) throw new Error("Failed to load profile");
         const data = await res.json();
         setEmail(data.email || "");
-      } catch {
-        showToast("Failed to load profile", "error");
+      } catch (err) {
+        showToast(err.message || "Failed to load profile", "error");
       } finally {
         setLoading(false);
       }
     };
     fetchProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = async () => {
@@ -48,6 +56,7 @@ export default function ProfilePage() {
       showToast("Email cannot be empty", "error");
       return;
     }
+
     setSaving(true);
     try {
       const updates = { email: email.trim() };
@@ -59,6 +68,13 @@ export default function ProfilePage() {
         body:    JSON.stringify(updates),
       });
 
+      // FIX: token expired — log out instead of showing cryptic error
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        showToast("Session expired. Please log in again.", "error");
+        return;
+      }
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || "Failed to update profile");
@@ -66,12 +82,12 @@ export default function ProfilePage() {
 
       const data = await res.json();
 
-      // Update AuthContext so the UI reflects the new email immediately
+      // Update AuthContext so navbar reflects new email immediately
       const token = localStorage.getItem("token");
       login({ token, userId: data.id, email: data.email });
 
       setPassword("");
-      showToast("Profile updated!");
+      showToast("Profile updated successfully!");
     } catch (err) {
       showToast(err.message || "Failed to update", "error");
     } finally {
@@ -107,7 +123,7 @@ export default function ProfilePage() {
       {/* Card */}
       <div className="form-card">
 
-        {/* Avatar */}
+        {/* Avatar + header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
           <div style={{
             width: 56, height: 56, borderRadius: "50%",
@@ -152,7 +168,10 @@ export default function ProfilePage() {
         <div className="form-group" style={{ marginBottom: 24 }}>
           <label className="form-label">
             <Lock size={13} strokeWidth={2} className="form-label-icon" />
-            New Password <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(leave blank to keep current)</span>
+            New Password{" "}
+            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
+              (leave blank to keep current)
+            </span>
           </label>
           <div className="input-icon-wrap">
             <span className="input-icon-prefix">
@@ -180,7 +199,6 @@ export default function ProfilePage() {
             : <><Save size={15} strokeWidth={2} /> Save Changes</>}
         </button>
 
-        {/* Info note */}
         <div style={{
           marginTop: 16, fontSize: 12, color: "var(--text-muted)",
           textAlign: "center", lineHeight: 1.5,
