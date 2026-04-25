@@ -1,315 +1,583 @@
 import React, { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  Trophy,
+  Zap,
+  Shield,
+  Globe,
+  BarChart2,
+  CheckCircle,
+  Star,
+  Target,
+  Lock,
+  RefreshCw,
+  ArrowUpRight,
+} from "lucide-react";
 import "./AboutPage.css";
+
+// Register GSAP plugin
+gsap.registerPlugin(ScrollTrigger);
+
+/* ─── Lenis smooth scroll (graceful if not installed) ─── */
+let LenisClass = null;
+try {
+  // eslint-disable-next-line
+  LenisClass = require("lenis").default || require("lenis");
+} catch (_) {}
+
+/* ─── Static demo data ────────────────────────────────── */
+const MONTHLY_DATA = [
+  { month: "Jan", leads: 12, revenue: 45 },
+  { month: "Feb", leads: 18, revenue: 62 },
+  { month: "Mar", leads: 25, revenue: 89 },
+  { month: "Apr", leads: 31, revenue: 115 },
+  { month: "May", leads: 28, revenue: 98 },
+  { month: "Jun", leads: 42, revenue: 156 },
+  { month: "Jul", leads: 38, revenue: 142 },
+  { month: "Aug", leads: 55, revenue: 198 },
+  { month: "Sep", leads: 61, revenue: 234 },
+  { month: "Oct", leads: 73, revenue: 289 },
+  { month: "Nov", leads: 68, revenue: 265 },
+  { month: "Dec", leads: 89, revenue: 342 },
+];
+
+const RADAR_DATA = [
+  { feature: "Lead Tracking", score: 95 },
+  { feature: "Analytics", score: 88 },
+  { feature: "Collaboration", score: 82 },
+  { feature: "Automation", score: 76 },
+  { feature: "Integrations", score: 71 },
+  { feature: "Mobile UX", score: 90 },
+];
+
+const STATS = [
+  { value: 10000, suffix: "+", label: "Leads Tracked", icon: Users, color: "#6366F1" },
+  { value: 98, suffix: "%", label: "Uptime SLA", icon: Shield, color: "#22C55E" },
+  { value: 342, suffix: "K", label: "Pipeline ₹ Managed", icon: DollarSign, color: "#F59E0B" },
+  { value: 2500, suffix: "+", label: "Teams Onboard", icon: Globe, color: "#A855F7" },
+];
 
 const FEATURES = [
   {
-    icon: "👥",
-    title: "Lead Management",
-    desc: "Add, edit, and track every lead through your sales pipeline. Full CRUD with ownership and access control.",
+    icon: Target,
+    title: "Smart Lead Scoring",
+    desc: "AI-driven scoring to prioritise your best opportunities and focus team effort where it matters most.",
     color: "#6366F1",
   },
   {
-    icon: "📝",
-    title: "Notes & Context",
-    desc: "Attach contextual notes to every lead. Keep your team aligned with inline editing and history.",
-    color: "#F97316",
-  },
-  {
-    icon: "📊",
-    title: "Visual Analytics",
-    desc: "Pie charts, bar charts, and live conversion rate dashboards to keep your finger on the pulse.",
+    icon: BarChart2,
+    title: "Live Analytics",
+    desc: "Real-time dashboards with drill-down charts so you always know where your pipeline stands.",
     color: "#22C55E",
   },
   {
-    icon: "🔍",
-    title: "Smart Search & Filter",
-    desc: "Instantly find any lead by name, email, company, or pipeline status.",
-    color: "#0EA5E9",
+    icon: Users,
+    title: "Team Collaboration",
+    desc: "Share notes, assign tasks, and keep everyone aligned with built-in shared context.",
+    color: "#F59E0B",
   },
   {
-    icon: "🤖",
-    title: "AI Assistant",
-    desc: "Ask questions about your pipeline in plain English. Powered by Groq · Llama 3.",
+    icon: Zap,
+    title: "Workflow Automation",
+    desc: "Automate follow-ups, reminders, and status updates to reclaim hours every week.",
+    color: "#F97316",
+  },
+  {
+    icon: Lock,
+    title: "Enterprise Security",
+    desc: "Bank-grade encryption, role-based access control, and full audit logs keep your data safe.",
     color: "#A855F7",
   },
   {
-    icon: "⬇",
-    title: "CSV Export",
-    desc: "Download your complete lead database as a CSV file for external analysis anytime.",
-    color: "#F43F5E",
+    icon: RefreshCw,
+    title: "Seamless Integrations",
+    desc: "Connect with Gmail, Slack, WhatsApp and 50+ tools your team already uses daily.",
+    color: "#3B82F6",
   },
 ];
 
-const STEPS = [
-  { num: "01", title: "Create Account", desc: "Sign up in seconds. Your data is private and scoped to your account.", icon: "🔐" },
-  { num: "02", title: "Add Leads",       desc: "Fill in lead details — name, email, company, deal value, and pipeline stage.", icon: "➕" },
-  { num: "03", title: "Track Pipeline",  desc: "Move leads across stages: Prospect → Qualified → Proposal → Closed.", icon: "📋" },
-  { num: "04", title: "Analyze & Win",   desc: "Use the Analytics dashboard to spot trends and improve conversion.", icon: "🎯" },
+const CRM_THEORY = [
+  {
+    icon: Target,
+    title: "What is CRM?",
+    desc: "Customer Relationship Management is a system designed to manage customer interactions, automate sales processes, and improve business relationships and profitability.",
+    color: "#6366F1",
+  },
+  {
+    icon: TrendingUp,
+    title: "CRM Benefits",
+    desc: "Boost productivity, improve customer satisfaction, increase sales, reduce costs, and make data-driven decisions with a unified platform for your entire team.",
+    color: "#22C55E",
+  },
+  {
+    icon: Target,
+    title: "Best Practices",
+    desc: "Track all customer interactions, maintain consistent communication, set clear goals, train your team regularly, and continuously optimize your workflow.",
+    color: "#F59E0B",
+  },
+  {
+    icon: Zap,
+    title: "Key Features",
+    desc: "Lead tracking, pipeline management, automated workflows, detailed analytics, team collaboration tools, and seamless integration with your existing systems.",
+    color: "#A855F7",
+  },
 ];
 
-const TECH = ["React 18", "Spring Boot", "PostgreSQL", "Groq AI", "Recharts", "GSAP", "Lenis", "Vercel", "Render"];
+/* ─── Animated counter ──────────────────────────────────── */
+function Counter({ target, suffix }) {
+  const [display, setDisplay] = useState(0);
+  const elRef = useRef(null);
+  const fired = useRef(false);
 
-function useInViewAbout(threshold = 0.15) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const el = ref.current;
+    const el = elRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { setVisible(true); obs.unobserve(el); }
-    }, { threshold });
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !fired.current) {
+          fired.current = true;
+          const duration = 1800;
+          const start = performance.now();
+          const tick = (now) => {
+            const t = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 4);
+            setDisplay(Math.round(ease * target));
+            if (t < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.3 }
+    );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [threshold]);
-  return [ref, visible];
-}
+  }, [target]);
 
-function AnimSection({ children, className = "", delay = 0 }) {
-  const [ref, visible] = useInViewAbout();
   return (
-    <div
-      ref={ref}
-      className={`abt-anim ${visible ? "abt-anim--in" : ""} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
+    <span ref={elRef}>
+      {display.toLocaleString()}
+      {suffix}
+    </span>
   );
 }
 
+/* ─── Tooltip style ─────────────────────────────────────── */
+const TT = {
+  background: "var(--bg-surface, #1e2535)",
+  border: "1px solid var(--border)",
+  borderRadius: 10,
+  color: "var(--text-primary)",
+  fontSize: 12,
+  boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+};
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN COMPONENT
+═══════════════════════════════════════════════════════════ */
 export default function AboutPage() {
-  const heroRef = useRef(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const rootRef = useRef(null);
+  const lenisRef = useRef(null);
 
+  /* ── Lenis init ── */
   useEffect(() => {
-    const move = (e) => setMousePos({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
-  }, []);
-
-  // Hero word-by-word animation on mount
-  useEffect(() => {
-    const words = heroRef.current?.querySelectorAll(".abt-hero-word");
-    if (!words) return;
-    words.forEach((w, i) => {
-      setTimeout(() => {
-        w.style.opacity = "1";
-        w.style.transform = "translateY(0)";
-      }, 100 + i * 80);
+    if (!LenisClass) return;
+    const lenis = new LenisClass({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     });
+    lenisRef.current = lenis;
+    let rafId;
+    const raf = (time) => {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    };
+    rafId = requestAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
   }, []);
 
-  const orbX = mousePos.x * 0.02;
-  const orbY = mousePos.y * 0.02;
+  /* ── GSAP animations ── */
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      /* Hero entrance — staggered reveal */
+      const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      heroTl
+        .fromTo(".abt-hero-badge", { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.55 })
+        .fromTo(
+          ".abt-title",
+          { opacity: 0, y: 50, skewY: 2 },
+          { opacity: 1, y: 0, skewY: 0, duration: 0.85 },
+          "-=0.25"
+        )
+        .fromTo(".abt-sub", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.65 }, "-=0.45")
+        .fromTo(
+          ".abt-pill",
+          { opacity: 0, y: 20, scale: 0.9 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.08 },
+          "-=0.35"
+        );
+
+      /* Floating orbs continuous drift */
+      gsap.to(".abt-orb-1", { y: -28, duration: 4, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      gsap.to(".abt-orb-2", { y: 22, duration: 5, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 1.2 });
+      gsap.to(".abt-orb-3", { y: -16, duration: 3.8, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 0.6 });
+      gsap.to(".abt-orb-4", { y: 18, x: -10, duration: 4.5, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 0.9 });
+
+      /* KPI stat cards */
+      gsap.fromTo(
+        ".abt-stat-card",
+        { opacity: 0, y: 48, scale: 0.92 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.62,
+          stagger: 0.11,
+          ease: "back.out(1.6)",
+          scrollTrigger: { trigger: ".abt-stats-grid", start: "top 82%" },
+        }
+      );
+
+      /* Chart panels */
+      gsap.fromTo(
+        ".abt-chart-card",
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.75,
+          stagger: 0.15,
+          ease: "power2.out",
+          scrollTrigger: { trigger: ".abt-charts-row", start: "top 82%" },
+        }
+      );
+
+      /* Feature cards */
+      gsap.fromTo(
+        ".abt-feat-card",
+        { opacity: 0, y: 55, scale: 0.88 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.55,
+          stagger: 0.09,
+          ease: "back.out(1.5)",
+          scrollTrigger: { trigger: ".abt-features-grid", start: "top 82%" },
+        }
+      );
+
+      /* Theory cards */
+      gsap.fromTo(
+        ".abt-theory-card",
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.65,
+          stagger: 0.12,
+          ease: "power2.out",
+          scrollTrigger: { trigger: ".abt-theory-scroll", start: "top 82%" },
+        }
+      );
+
+      /* Section headers */
+      gsap.utils.toArray(".abt-section-header").forEach((el) => {
+        gsap.fromTo(
+          el,
+          { opacity: 0, y: 32 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.65,
+            ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%" },
+          }
+        );
+      });
+
+      /* CTA card reveal */
+      gsap.fromTo(
+        ".abt-cta-card",
+        { opacity: 0, scale: 0.94, y: 30 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.8,
+          ease: "back.out(1.4)",
+          scrollTrigger: { trigger: ".abt-cta-card", start: "top 85%" },
+        }
+      );
+
+      /* Divider lines draw-in */
+      gsap.utils.toArray(".abt-divider").forEach((el) => {
+        gsap.fromTo(
+          el,
+          { scaleX: 0, transformOrigin: "left" },
+          {
+            scaleX: 1,
+            duration: 0.9,
+            ease: "power2.inOut",
+            scrollTrigger: { trigger: el, start: "top 90%" },
+          }
+        );
+      });
+    }, rootRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <div className="abt-root">
-      {/* Ambient orbs */}
-      <div
-        className="abt-orb abt-orb-1"
-        style={{ transform: `translate(${orbX}px, ${orbY}px)` }}
-      />
-      <div
-        className="abt-orb abt-orb-2"
-        style={{ transform: `translate(${-orbX * 0.7}px, ${-orbY * 0.7}px)` }}
-      />
-      <div className="abt-grid-bg" />
+    <div className="abt-root" ref={rootRef}>
+      {/* ── DECORATIVE ORBS ────────────────────────── */}
+      <div className="abt-orb abt-orb-1" />
+      <div className="abt-orb abt-orb-2" />
+      <div className="abt-orb abt-orb-3" />
+      <div className="abt-orb abt-orb-4" />
 
-      {/* ── HERO ── */}
-      <section className="abt-hero" ref={heroRef}>
+      {/* ── HERO ──────────────────────────────────── */}
+      <section className="abt-hero">
         <div className="abt-hero-badge">
-          <span className="abt-badge-pulse" />
-          Sales Intelligence Platform
+          <Star size={12} />
+          <span>Trusted by 2,500+ Sales Teams Across India</span>
         </div>
 
-        <h1 className="abt-hero-title">
-          {"CRM Lite".split("").map((ch, i) => (
-            <span
-              key={i}
-              className="abt-hero-word"
-              style={{
-                display: "inline-block",
-                opacity: 0,
-                transform: "translateY(40px)",
-                transition: "opacity 0.5s ease, transform 0.5s ease",
-                marginRight: ch === " " ? "0.3em" : "0",
-              }}
-            >
-              {ch === " " ? "\u00A0" : ch}
-            </span>
-          ))}
+        <h1 className="abt-title">
+          The CRM built for<br />modern sales teams
         </h1>
 
-        <p className="abt-hero-sub">
-          A lightweight, full-stack CRM for modern sales teams. Track every lead,
-          close more deals, and make data-driven decisions — without the bloat.
+        <p className="abt-sub">
+          CRM Lite gives you everything you need to track leads, close deals,
+          and grow revenue — without the enterprise bloat. Fast, simple, powerful.
         </p>
 
-        <div className="abt-hero-stats">
-          {[
-            { val: "5+", label: "Pipeline Stages" },
-            { val: "∞",  label: "Leads Supported" },
-            { val: "AI", label: "Powered Insights" },
-          ].map((s) => (
-            <div key={s.label} className="abt-hero-stat">
-              <span className="abt-hero-stat-val">{s.val}</span>
-              <span className="abt-hero-stat-label">{s.label}</span>
-            </div>
-          ))}
+        <div className="abt-hero-cta">
+          <div className="abt-pill">🇮🇳 Made in India</div>
+          <div className="abt-pill">⚡ Real-time Sync</div>
+          <div className="abt-pill">🔒 SOC-2 Compliant</div>
+          <div className="abt-pill">🚀 5-min Setup</div>
         </div>
       </section>
 
-      {/* ── ABOUT THE APP ── */}
-      <section className="abt-section">
-        <AnimSection className="abt-section-header">
-          <div className="abt-tag">About the App</div>
-          <h2 className="abt-section-title">Why CRM Lite?</h2>
-        </AnimSection>
-
-        <div className="abt-two-col">
-          <AnimSection delay={100}>
-            <div className="abt-card abt-card--glass">
-              <div className="abt-card-icon">💡</div>
-              <h3 className="abt-card-title">The Problem</h3>
-              <p className="abt-card-body">
-                Most CRMs are expensive, overcomplicated, or both. Small teams
-                and solo founders need something that <strong>just works</strong> —
-                zero setup friction, no per-seat pricing, no bloated feature set.
-              </p>
+      {/* ── KPI STATS ─────────────────────────────── */}
+      <section className="abt-stats-grid">
+        {STATS.map(({ value, suffix, label, icon: Icon, color }) => (
+          <div className="abt-stat-card" key={label}>
+            <div className="abt-stat-icon" style={{ background: color + "1a", color }}>
+              <Icon size={20} strokeWidth={2} />
             </div>
-          </AnimSection>
-
-          <AnimSection delay={200}>
-            <div className="abt-card abt-card--glass">
-              <div className="abt-card-icon">✅</div>
-              <h3 className="abt-card-title">The Solution</h3>
-              <p className="abt-card-body">
-                CRM Lite is purpose-built for clarity. A clean pipeline, real-time
-                analytics, AI-powered chat, and full data ownership. Everything you
-                need. Nothing you don't.
-              </p>
+            <div className="abt-stat-value" style={{ color }}>
+              <Counter target={value} suffix={suffix} />
             </div>
-          </AnimSection>
-        </div>
+            <div className="abt-stat-label">{label}</div>
+          </div>
+        ))}
       </section>
 
-      {/* ── FEATURES ── */}
-      <section className="abt-section abt-section--alt">
-        <AnimSection className="abt-section-header">
-          <div className="abt-tag">Features</div>
-          <h2 className="abt-section-title">Everything your team needs</h2>
+      <div className="abt-divider" />
+
+      {/* ── CHARTS ────────────────────────────────── */}
+      <section className="abt-chart-section">
+        <div className="abt-section-header">
+          <div className="abt-section-eyebrow">Platform Performance</div>
+          <h2 className="abt-section-title">Growth in numbers</h2>
           <p className="abt-section-sub">
-            Built with simplicity in mind. Every feature maps to a real workflow.
+            Aggregate performance across all CRM Lite teams over the past year
           </p>
-        </AnimSection>
+        </div>
+
+        <div className="abt-charts-row">
+          {/* Area chart – pipeline revenue + leads */}
+          <div className="abt-chart-card">
+            <div className="abt-chart-header">
+              <div className="abt-chart-label">Monthly Pipeline & Leads</div>
+              <div className="abt-chart-legend">
+                <span className="abt-legend-dot" style={{ background: "#6366F1" }} /> Revenue ₹K
+                <span className="abt-legend-dot" style={{ background: "#A855F7" }} /> Leads
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={MONTHLY_DATA} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.32} />
+                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gLead" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#A855F7" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={32}
+                />
+                <Tooltip contentStyle={TT} />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#6366F1"
+                  strokeWidth={2.5}
+                  fill="url(#gRev)"
+                  name="Revenue ₹K"
+                  dot={false}
+                  activeDot={{ r: 5, fill: "#6366F1", strokeWidth: 0 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="leads"
+                  stroke="#A855F7"
+                  strokeWidth={2}
+                  fill="url(#gLead)"
+                  name="Leads"
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#A855F7", strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Radar chart – platform capability */}
+          <div className="abt-chart-card">
+            <div className="abt-chart-header">
+              <div className="abt-chart-label">Platform Capability Scores</div>
+              <div className="abt-chart-legend">
+                <span className="abt-legend-dot" style={{ background: "#6366F1" }} /> Score / 100
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart data={RADAR_DATA} cx="50%" cy="50%" outerRadius={78}>
+                <PolarGrid stroke="var(--border)" />
+                <PolarAngleAxis
+                  dataKey="feature"
+                  tick={{ fill: "var(--text-secondary)", fontSize: 10 }}
+                />
+                <Radar
+                  name="Score"
+                  dataKey="score"
+                  stroke="#6366F1"
+                  fill="#6366F1"
+                  fillOpacity={0.22}
+                  strokeWidth={2}
+                />
+                <Tooltip contentStyle={TT} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      <div className="abt-divider" />
+
+      {/* ── FEATURES ──────────────────────────────── */}
+      <section className="abt-features-section">
+        <div className="abt-section-header">
+          <div className="abt-section-eyebrow">What's Inside</div>
+          <h2 className="abt-section-title">Everything you need to close</h2>
+          <p className="abt-section-sub">
+            A complete toolkit for high-performing sales teams, with zero setup complexity
+          </p>
+        </div>
 
         <div className="abt-features-grid">
-          {FEATURES.map((f, i) => (
-            <AnimSection key={f.title} delay={i * 80}>
-              <div className="abt-feature-card" style={{ "--feat-color": f.color }}>
-                <div className="abt-feature-icon">{f.icon}</div>
-                <h3 className="abt-feature-title">{f.title}</h3>
-                <p className="abt-feature-desc">{f.desc}</p>
-                <div className="abt-feature-glow" />
+          {FEATURES.map(({ icon: Icon, title, desc, color }) => (
+            <div className="abt-feat-card" key={title}>
+              <div className="abt-feat-icon" style={{ background: color + "1a", color }}>
+                <Icon size={22} strokeWidth={1.8} />
               </div>
-            </AnimSection>
-          ))}
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section className="abt-section">
-        <AnimSection className="abt-section-header">
-          <div className="abt-tag">How It Works</div>
-          <h2 className="abt-section-title">Up and running in minutes</h2>
-        </AnimSection>
-
-        <div className="abt-steps">
-          {STEPS.map((step, i) => (
-            <AnimSection key={step.num} delay={i * 120}>
-              <div className="abt-step">
-                <div className="abt-step-num">{step.num}</div>
-                <div className="abt-step-icon">{step.icon}</div>
-                <h3 className="abt-step-title">{step.title}</h3>
-                <p className="abt-step-desc">{step.desc}</p>
-                {i < STEPS.length - 1 && <div className="abt-step-arrow">→</div>}
-              </div>
-            </AnimSection>
-          ))}
-        </div>
-      </section>
-
-      {/* ── DEVELOPER ── */}
-      <section className="abt-section abt-section--alt">
-        <AnimSection className="abt-section-header">
-          <div className="abt-tag">Developer</div>
-          <h2 className="abt-section-title">Built with purpose</h2>
-        </AnimSection>
-
-        <AnimSection delay={100}>
-          <div className="abt-dev-card">
-            <div className="abt-dev-avatar">PR</div>
-            <div className="abt-dev-info">
-              <h3 className="abt-dev-name">Prachi Rajput</h3>
-              <p className="abt-dev-bio">
-                Full-stack engineer passionate about clean UI and real-world engineering.
-                CRM Lite demonstrates production-grade architecture from database design
-                to cloud deployment.
-              </p>
-              <div className="abt-dev-links">
-                <a href="https://github.com/Prachi088" target="_blank" rel="noreferrer" className="abt-dev-link">
-                  <span>⌥</span> GitHub
-                </a>
-                <a href="https://linkedin.com/in/prachi-rajput-023985280" target="_blank" rel="noreferrer" className="abt-dev-link">
-                  <span>in</span> LinkedIn
-                </a>
-              </div>
-              <div className="abt-tech-stack">
-                {TECH.map((t) => (
-                  <span key={t} className="abt-tech-pill">{t}</span>
-                ))}
+              <h3 className="abt-feat-title">{title}</h3>
+              <p className="abt-feat-desc">{desc}</p>
+              <div className="abt-feat-arrow" style={{ color }}>
+                <ArrowUpRight size={16} />
               </div>
             </div>
-          </div>
-        </AnimSection>
-      </section>
-
-      {/* ── FUTURE SCOPE ── */}
-      <section className="abt-section">
-        <AnimSection className="abt-section-header">
-          <div className="abt-tag">Roadmap</div>
-          <h2 className="abt-section-title">What's coming next</h2>
-        </AnimSection>
-
-        <div className="abt-roadmap">
-          {[
-            { icon: "📧", title: "Email Integration",     desc: "Send and track emails directly from each lead card." },
-            { icon: "📅", title: "Calendar & Reminders",  desc: "Set follow-up reminders that sync with your calendar." },
-            { icon: "👥", title: "Team Collaboration",    desc: "Assign leads, leave team notes, and manage roles." },
-            { icon: "📱", title: "Mobile App",            desc: "Native iOS & Android apps for on-the-go pipeline management." },
-          ].map((item, i) => (
-            <AnimSection key={item.title} delay={i * 100}>
-              <div className="abt-roadmap-item">
-                <span className="abt-roadmap-icon">{item.icon}</span>
-                <div>
-                  <div className="abt-roadmap-title">{item.title}</div>
-                  <div className="abt-roadmap-desc">{item.desc}</div>
-                </div>
-                <span className="abt-roadmap-badge">Soon</span>
-              </div>
-            </AnimSection>
           ))}
         </div>
       </section>
 
-      {/* ── VERSION FOOTER ── */}
-      <div className="abt-version-bar">
-        <span>CRM Lite v1.0</span>
-        <span>·</span>
-        <span>MIT License</span>
-        <span>·</span>
-        <span>© 2025 Prachi Rajput</span>
-      </div>
+      <div className="abt-divider" />
+
+      {/* ── CRM THEORY ────────────────────────────────── */}
+      <section className="abt-theory-section">
+        <div className="abt-section-header">
+          <div className="abt-section-eyebrow">CRM Fundamentals</div>
+          <h2 className="abt-section-title">Understanding CRM</h2>
+          <p className="abt-section-sub">
+            Learn the core concepts and principles that make CRM the backbone of modern sales operations
+          </p>
+        </div>
+
+        <div className="abt-theory-container">
+          <div className="abt-theory-scroll">
+            {[...CRM_THEORY, ...CRM_THEORY].map(({ icon: Icon, title, desc, color }, idx) => (
+              <div className="abt-theory-card" key={`${title}-${idx}`}>
+                <div className="abt-theory-icon" style={{ background: color + "1a", color }}>
+                  <Icon size={24} strokeWidth={1.8} />
+                </div>
+                <h3 className="abt-theory-title">{title}</h3>
+                <p className="abt-theory-desc">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="abt-divider" />
+
+      {/* ── CTA ───────────────────────────────────── */}
+      <section className="abt-cta-section">
+        <div className="abt-cta-card">
+          <div className="abt-cta-orb" />
+          <div className="abt-cta-badge">
+            <Trophy size={13} color="#F59E0B" />
+            <span>#1 CRM for growing Indian sales teams</span>
+          </div>
+          <h2 className="abt-cta-title">Start closing more deals today</h2>
+          <p className="abt-cta-sub">
+            Join thousands of sales teams already using CRM Lite to manage pipelines
+            and grow revenue — faster than ever.
+          </p>
+          <div className="abt-cta-features">
+            {["Free to start", "No credit card", "5-minute setup", "Cancel anytime"].map(
+              (f) => (
+                <div key={f} className="abt-cta-item">
+                  <CheckCircle size={14} color="#22C55E" strokeWidth={2.5} />
+                  <span>{f}</span>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

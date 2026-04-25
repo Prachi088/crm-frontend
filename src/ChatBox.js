@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { MessageCircle, X, Send, Bot, Zap } from "lucide-react";
 import "./ChatBox.css";
 
-const API =process.env.REACT_APP_API_URL;
+const API = process.env.REACT_APP_API_URL;
 
 function ChatBox({ leads }) {
   const [open, setOpen] = useState(false);

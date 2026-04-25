@@ -24,39 +24,26 @@ export default function AuthModal({ onClose, initialMode = "login" }) {
   const formRef = useRef(null);
   const errorRef = useRef(null);
 
-  // ── entrance animation ──────────────────────────────────────────
-  useEffect(() => {
-  // Backdrop fade in
-  gsap.fromTo(".auth-backdrop", { opacity: 0 }, { opacity: 1, duration: 0.3 });
+// DELETE your current useEffect and replace with these two:
 
-  // Modal slide up + fade
+// 1. Mount only
+useEffect(() => {
+  gsap.fromTo(".auth-backdrop", { opacity: 0 }, { opacity: 1, duration: 0.3 });
   gsap.fromTo(
     modalRef.current,
     { opacity: 0, y: 40, scale: 0.95 },
     { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power2.out" }
   );
+}, []);
 
-  // ✅ FIX: Don't animate form-group opacity from 0.
-  // Just do a subtle translateY only, keep opacity: 1
-  if (formRef.current) {
-    gsap.fromTo(
-      formRef.current.querySelectorAll(".form-group"),
-      { y: 10, opacity: 1 },
-      { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.2 }
-    );
-  }
-
-  // Button entrance — no opacity:0 start
-  if (formRef.current) {
-    const button = formRef.current.querySelector(".auth-submit-btn");
-    if (button) {
-      gsap.fromTo(
-        button,
-        { y: 8, opacity: 1 },
-        { y: 0, opacity: 1, duration: 0.35, ease: "power2.out", delay: 0.3 }
-      );
-    }
-  }
+// 2. On toggle only
+useEffect(() => {
+  if (!formRef.current) return;
+  gsap.fromTo(
+    formRef.current.querySelectorAll(".form-group"),
+    { y: 10 },
+    { y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.15 }
+  );
 }, [isLogin]);
 
   // ── inline validation ──────────────────────────────────────────────

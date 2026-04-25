@@ -1,31 +1,8 @@
 import React from "react";
 import "./Footer.css";
 
-/**
- * GlobalFooter
- *
- * Props:
- *  page       – "leads" | "analytics" | "profile" | "about" | "landing" | default
- *  leadsCount – number (optional, for leads page context)
- *  user       – user object from AuthContext (optional)
- *  onNavigate – function(page) to handle nav clicks (optional)
- */
 export default function GlobalFooter({ page = "default", leadsCount, user, onNavigate }) {
   const year = new Date().getFullYear();
-
-  // Dynamic context message per page
-  const contextMsg = {
-    leads:     leadsCount != null
-      ? `📋 You have ${leadsCount} lead${leadsCount !== 1 ? "s" : ""} in your pipeline.`
-      : "📋 Manage and track all your sales leads.",
-    analytics: "📊 Gain insights and improve your conversion rate.",
-    profile:   user?.email
-      ? `👤 Signed in as ${user.email}`
-      : "👤 Manage your account and preferences.",
-    about:     "🚀 CRM Lite — Built for modern sales teams.",
-    landing:   "✨ Open source & free to use forever.",
-    default:   "💼 Your sales pipeline, organized.",
-  }[page] || "💼 Your sales pipeline, organized.";
 
   const navLinks = [
     { label: "Home",      page: "landing"   },
@@ -38,15 +15,13 @@ export default function GlobalFooter({ page = "default", leadsCount, user, onNav
     if (onNavigate) onNavigate(target);
   };
 
+  const isDark = page === "landing" || page === "about";
+
   return (
-    <footer className="gfooter">
-      {/* Context bar */}
-      <div className="gfooter-context">
-        <span className="gfooter-context-msg">{contextMsg}</span>
-      </div>
+    <footer className={`gfooter${isDark ? " gfooter--dark" : ""}`}>
+      <div className="gfooter-divider" />
 
       <div className="gfooter-body">
-        {/* Brand column */}
         <div className="gfooter-brand">
           <div className="gfooter-logo">
             <span className="gfooter-logo-dot" />
@@ -57,35 +32,22 @@ export default function GlobalFooter({ page = "default", leadsCount, user, onNav
             and grow revenue — all in one place.
           </p>
           <div className="gfooter-social">
-            <a
-              href="https://github.com/Prachi088"
-              target="_blank"
-              rel="noreferrer"
-              className="gfooter-social-link"
-              title="GitHub"
-            >
+            <a href="https://github.com/Prachi088" target="_blank" rel="noreferrer" className="gfooter-social-link" title="GitHub">
               <GitHubIcon />
             </a>
-            <a
-              href="https://linkedin.com/in/prachi-rajput-023985280"
-              target="_blank"
-              rel="noreferrer"
-              className="gfooter-social-link"
-              title="LinkedIn"
-            >
+            <a href="https://linkedin.com/in/prachi-rajput-023985280" target="_blank" rel="noreferrer" className="gfooter-social-link" title="LinkedIn">
               <LinkedInIcon />
             </a>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="gfooter-nav-col">
+        <div className="gfooter-col">
           <h4 className="gfooter-col-title">Navigation</h4>
           <ul className="gfooter-nav-list">
             {navLinks.map((link) => (
               <li key={link.label}>
                 <button
-                  className={`gfooter-nav-link ${page === link.page ? "gfooter-nav-link--active" : ""}`}
+                  className={`gfooter-nav-link${page === link.page ? " gfooter-nav-link--active" : ""}`}
                   onClick={() => handleNav(link.page)}
                 >
                   {link.label}
@@ -95,42 +57,26 @@ export default function GlobalFooter({ page = "default", leadsCount, user, onNav
           </ul>
         </div>
 
-        {/* Contact / info */}
-        <div className="gfooter-info-col">
+        <div className="gfooter-col">
           <h4 className="gfooter-col-title">Contact</h4>
           <ul className="gfooter-info-list">
-            <li>
-              <a href="mailto:support@crmlite.dev" className="gfooter-info-link">
-                support@crmlite.dev
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://github.com/Prachi088"
-                target="_blank"
-                rel="noreferrer"
-                className="gfooter-info-link"
-              >
-                GitHub Repository
-              </a>
-            </li>
-            <li className="gfooter-info-text">Built with React &amp; Spring Boot</li>
-            <li className="gfooter-info-text">Hosted on Vercel &amp; Render</li>
+            <li><a href="mailto:support@crmlite.dev" className="gfooter-info-link">support@crmlite.dev</a></li>
+            <li><a href="https://github.com/Prachi088" target="_blank" rel="noreferrer" className="gfooter-info-link">GitHub Repository</a></li>
+            <li><span className="gfooter-info-text">React &amp; Spring Boot</span></li>
+            <li><span className="gfooter-info-text">Vercel &amp; Render</span></li>
           </ul>
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="gfooter-bottom">
-        <span>© {year} CRM Lite · MIT License</span>
-        <span className="gfooter-version">v1.0.0</span>
-        <span>Made with ♥ by Prachi Rajput</span>
+        <span className="gfooter-copy">© {year} CRM Lite · MIT License</span>
+        {/* <span className="gfooter-version">v1.0.0</span> */}
+        <span className="gfooter-credit">Made with ♥ by Prachi Rajput</span>
       </div>
     </footer>
   );
 }
 
-/* ── Inline SVG icons (no extra dep) ── */
 function GitHubIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

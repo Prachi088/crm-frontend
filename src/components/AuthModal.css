@@ -107,8 +107,6 @@
   display: flex; flex-direction: column;
   gap: 22px;
   margin-bottom: 24px;
-  opacity: 1 !important;
-  visibility: visible !important;
 }
 
 /* Ensure form fields are always visible — GSAP enhances, not controls */
@@ -117,16 +115,8 @@
   display: flex !important;
   flex-direction: column;
   gap: 8px;
-  opacity: 1 !important;
-  visibility: visible !important;
   transition: opacity 0.2s;
 }
-
-.auth-submit-btn {
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
 /* Per-field error state */
 .form-group--error .form-input {
   border-bottom-color: #F43F5E;

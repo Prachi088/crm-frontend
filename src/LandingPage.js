@@ -325,12 +325,12 @@ function LandingPage({ onEnter }) {
           </div>
         </div>
       </section>
-
-      {/* FOOTER */}
+{/* 
+      FOOTER
       <footer className="landing-footer">
-        <span>© 2025 CRM Lite · MIT License</span>
+        // <span>© {new Date().getFullYear()} CRM Lite · MIT License</span>
         <button className="footer-cta" onClick={onEnter}>Open Dashboard →</button>
-      </footer>
+      </footer> */}
     </div>
   );
 }

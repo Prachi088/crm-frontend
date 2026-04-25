@@ -70,7 +70,7 @@ body {
   background: rgba(8,12,24,.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #1A2240;
 }
 
 .landing-logo {
@@ -93,8 +93,8 @@ body {
 
 .landing-cta-nav {
   background: transparent;
-  border: 1px solid var(--border2);
-  color: var(--muted2);
+  border: 1px solid #222D4A;
+  color: #94A3B8;
   padding: 9px 20px;
   border-radius: 8px;
   font-size: 13px; font-weight: 600;
@@ -194,7 +194,7 @@ body {
 
 .hero-sub {
   font-size: 17px;
-  color: var(--muted2);
+  color: #94A3B8;
   line-height: 1.8;
   max-width: 500px;
   margin: 0 auto 44px;
@@ -232,8 +232,8 @@ body {
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 8px;
   background: transparent;
-  color: var(--muted2);
-  border: 1px solid var(--border2);
+  color: #94A3B8;
+  border: 1px solid #222D4A;
   padding: 15px 28px;
   border-radius: 12px;
   font-size: 15px; font-weight: 500;
@@ -252,7 +252,7 @@ body {
   bottom: 32px; left: 50%;
   transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: var(--muted);
+  color: #64748B;
   font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
   opacity: 0;
   animation: fadeIn 1s ease 2.5s both;
@@ -274,23 +274,23 @@ body {
   position: relative; z-index: 1;
   background: #080C18;
   padding: 48px 56px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #1A2240;
 }
 
 .stats-inner {
   max-width: 860px;
   margin: 0 auto;
   display: grid; grid-template-columns: repeat(3, 1fr);
-  border: 1px solid var(--border);
+  border: 1px solid #1A2240;
   border-radius: 20px;
   overflow: hidden;
-  background: var(--card);
+  background: #0F1629;
   /* removed negative translateY - was creating dead space */
 }
 
 .stat-item {
   padding: 32px 36px;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #1A2240;
   opacity: 0; transform: translateY(30px);
 }
 .stat-item:last-child { border-right: none; }
@@ -301,7 +301,7 @@ body {
   line-height: 1; margin-bottom: 6px;
 }
 .stat-num span { color: var(--accent); }
-.stat-label { font-size: 13px; color: var(--muted); font-weight: 400; }
+.stat-label { font-size: 13px; color: #64748B; font-weight: 400; }
 
 /* ─── SHARED SECTION STYLES ─── */
 .section-tag {
@@ -331,7 +331,7 @@ body {
 
 .section-sub {
   font-size: 15px;
-  color: var(--muted2);
+  color: #94A3B8;
   line-height: 1.75;
   font-weight: 300;
   max-width: 400px;
@@ -343,7 +343,7 @@ body {
   position: relative; z-index: 1;
   background: #080C18;
   padding: 80px 56px 100px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #1A2240;
 }
 
 .features-layout {
@@ -367,8 +367,8 @@ body {
 }
 
 .feature-card {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: #0F1629;
+  border: 1px solid #1A2240;
   border-radius: 16px;
   padding: 26px 22px;
   position: relative;
@@ -402,13 +402,13 @@ body {
 
 .feature-title {
   font-size: 14px; font-weight: 700;
-  color: var(--text);
+  color: #F1F5F9;
   margin-bottom: 7px;
 }
 
 .feature-desc {
   font-size: 13px;
-  color: var(--muted);
+  color: #64748B;
   line-height: 1.65;
 }
 
@@ -417,7 +417,7 @@ body {
   position: relative; z-index: 1;
   background: #080C18;
   padding: 60px 56px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #1A2240;
 }
 
 .pipeline-inner {
@@ -456,7 +456,7 @@ body {
 
 .pipeline-arrow {
   width: 36px; height: 1px;
-  background: var(--border2);
+  background: #222D4A;
   position: relative;
   opacity: 0;
 }
@@ -464,7 +464,7 @@ body {
   content: '›';
   position: absolute;
   right: -6px; top: -11px;
-  color: var(--border2);
+  color: #222D4A;
   font-size: 18px;
 }
 
@@ -473,7 +473,7 @@ body {
   position: relative; z-index: 1;
   background: #080C18;
   padding: 80px 56px 100px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #1A2240;
 }
 
 .about-inner {
@@ -486,8 +486,8 @@ body {
 }
 
 .about-card {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: #0F1629;
+  border: 1px solid #1A2240;
   border-radius: 24px;
   padding: 40px;
   opacity: 0;
@@ -496,12 +496,12 @@ body {
 
 .about-text {
   font-size: 14px;
-  color: var(--muted2);
+  color: #94A3B8;
   line-height: 1.85;
   margin-bottom: 28px;
   font-weight: 300;
 }
-.about-text strong { color: var(--text); font-weight: 600; }
+.about-text strong { color: #F1F5F9; font-weight: 600; }
 
 .tech-stack {
   display: flex; gap: 8px; flex-wrap: wrap;
@@ -520,7 +520,7 @@ body {
 
 .author-row {
   display: flex; align-items: center; gap: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #1A2240;
   padding-top: 24px;
 }
 
@@ -534,11 +534,11 @@ body {
   flex-shrink: 0;
 }
 
-.author-name { font-weight: 600; color: var(--text); font-size: 14px; }
+.author-name { font-weight: 600; color: #F1F5F9; font-size: 14px; }
 
 .author-links {
   display: flex; gap: 8px; align-items: center;
-  font-size: 13px; color: var(--muted); margin-top: 3px;
+  font-size: 13px; color: #64748B; margin-top: 3px;
 }
 .author-links a { color: var(--accent); text-decoration: none; font-weight: 500; }
 .author-links a:hover { text-decoration: underline; }
@@ -549,8 +549,8 @@ body {
   background: #080C18;
   display: flex; align-items: center; justify-content: space-between;
   padding: 24px 56px;
-  border-top: 1px solid var(--border);
-  font-size: 13px; color: var(--muted);
+  border-top: 1px solid #1A2240;
+  font-size: 13px; color: #64748B;
 }
 
 .footer-cta {
@@ -575,7 +575,7 @@ body {
   .about-inner       { grid-template-columns: 1fr; gap: 40px; }
   .about-card        { padding: 28px 20px; }
   .stats-inner       { grid-template-columns: 1fr; transform: none; }
-  .stat-item         { border-right: none; border-bottom: 1px solid var(--border); }
+  .stat-item         { border-right: none; border-bottom: 1px solid #1A2240; }
   .stat-item:last-child { border-bottom: none; }
   .landing-footer    { padding: 20px 24px; flex-direction: column; gap: 12px; text-align: center; }
   .pipeline-arrow    { display: none; }
