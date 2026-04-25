@@ -62,12 +62,16 @@ function Badge({ status }) {
 
 // ── Notes ─────────────────────────────────────────────────────────
 function Notes({ leadId, leadOwnerId, currentUserId }) {
-  const [notes, setNotes] = useState([]);
-  const [text, setText]   = useState("");
-  const [open, setOpen]   = useState(false);
+  const [notes, setNotes]     = useState([]);
+  const [text, setText]       = useState("");
+  const [open, setOpen]       = useState(false);
+  const [adding, setAdding]   = useState(false);
+  const [noteError, setNoteError] = useState("");
 
-  // current user is owner of this lead
-  const isOwner = Boolean(currentUserId && leadOwnerId && currentUserId === leadOwnerId);
+  // FIX: both ids come as numbers from JSON — use == (loose) to avoid type mismatch
+  // between a number stored in state vs a number from the API response.
+  // eslint-disable-next-line eqeqeq
+  const isOwner = Boolean(currentUserId && leadOwnerId && currentUserId == leadOwnerId);
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -75,18 +79,24 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
       const res   = await fetch(`${API}/notes/lead/${leadId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) return;
       const data = await res.json();
       setNotes(Array.isArray(data) ? data : []);
     } catch {}
   }, [leadId]);
 
-  useEffect(() => { if (open) fetchNotes(); }, [open, fetchNotes]);
+  // FIX: fetch notes when panel opens AND whenever leadId changes
+  useEffect(() => {
+    if (open) fetchNotes();
+  }, [open, fetchNotes]);
 
   const addNote = async () => {
-    if (!text.trim() || !isOwner) return;
+    if (!text.trim() || !isOwner || adding) return;
+    setAdding(true);
+    setNoteError("");
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${API}/notes/lead/${leadId}`, {
+      const res = await fetch(`${API}/notes/lead/${leadId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,20 +104,39 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
         },
         body: JSON.stringify({ content: text }),
       });
+
+      if (!res.ok) {
+        // FIX: previously ignored the response — never knew if POST failed.
+        // Now surface the error so the user knows something went wrong.
+        const err = await res.json().catch(() => ({}));
+        setNoteError(err.message || "Failed to add note");
+        return;
+      }
+
+      // FIX: append the returned note directly to state instead of refetching.
+      // This makes the note appear instantly without a round-trip.
+      const saved = await res.json();
+      setNotes((prev) => [...prev, saved]);
       setText("");
-      await fetchNotes();
-    } catch {}
+    } catch {
+      setNoteError("Network error");
+    } finally {
+      setAdding(false);
+    }
   };
 
   const deleteNote = async (id) => {
     if (!isOwner) return;
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${API}/notes/${id}`, {
+      const res = await fetch(`${API}/notes/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      setNotes((n) => n.filter((x) => x.id !== id));
+      if (res.ok) {
+        // FIX: optimistic removal — update UI immediately on success
+        setNotes((n) => n.filter((x) => x.id !== id));
+      }
     } catch {}
   };
 
@@ -133,11 +162,19 @@ function Notes({ leadId, leadOwnerId, currentUserId }) {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addNote()}
+                disabled={adding}
               />
-              <button className="btn-add-note" onClick={addNote}>
+              <button className="btn-add-note" onClick={addNote} disabled={adding}>
                 <MessageSquarePlus size={14} strokeWidth={2} />
-                Add
+                {adding ? "Adding…" : "Add"}
               </button>
+            </div>
+          )}
+
+          {/* Error feedback for note POST failures */}
+          {noteError && (
+            <div style={{ fontSize: 12, color: "#F43F5E", marginBottom: 6 }}>
+              {noteError}
             </div>
           )}
 
@@ -219,6 +256,7 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
   const { user: currentUser } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm]   = useState({});
+  const [saving, setSaving]       = useState(false);
   const listRef = useRef(null);
 
   // Animate cards in on initial render / filter change
@@ -234,11 +272,30 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
 
   const startEdit = (lead) => {
     setEditingId(lead.id);
-    setEditForm(lead);
+    // FIX: only copy the fields the backend expects — do NOT spread the whole lead
+    // object (which includes nested `owner` object). The backend's Lead entity has
+    // setOwner() but the owner should never change on update. Sending nested owner
+    // caused Jackson deserialization issues → 400 → "Failed to update".
+    setEditForm({
+      name:      lead.name      || "",
+      email:     lead.email     || "",
+      company:   lead.company   || "",
+      dealValue: lead.dealValue || "",
+      status:    lead.status    || "PROSPECT",
+    });
   };
 
   const saveEdit = async () => {
-    const ok = await onUpdate(editingId, editForm);
+    setSaving(true);
+    // FIX: cast dealValue to a number before sending.
+    // Previously `e.target.value` kept it as a string → backend received "50000"
+    // (string) instead of 50000 (number) → Jackson parse error → 400 Bad Request.
+    const payload = {
+      ...editForm,
+      dealValue: editForm.dealValue ? parseFloat(editForm.dealValue) : null,
+    };
+    const ok = await onUpdate(editingId, payload);
+    setSaving(false);
     if (ok) setEditingId(null);
   };
 
@@ -312,6 +369,12 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
         <div className="lead-list" ref={listRef}>
           {leads.map((lead) => {
             const cardRef = React.createRef();
+
+            // FIX: compute isOwner per lead using == (loose equality) to handle
+            // number vs number comparison safely across JSON serialization.
+            // eslint-disable-next-line eqeqeq
+            const isLeadOwner = currentUser && lead.owner && currentUser.id == lead.owner.id;
+
             return (
               <div key={lead.id} className="lead-card" ref={cardRef}>
                 {editingId === lead.id ? (
@@ -349,10 +412,10 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
                       {STATUSES.map((s) => <option key={s}>{s}</option>)}
                     </select>
                     <div className="edit-actions">
-                      <button className="btn-save" onClick={saveEdit}>
-                        <Check size={13} strokeWidth={2.5} /> Save
+                      <button className="btn-save" onClick={saveEdit} disabled={saving}>
+                        <Check size={13} strokeWidth={2.5} /> {saving ? "Saving…" : "Save"}
                       </button>
-                      <button className="btn-cancel" onClick={() => setEditingId(null)}>
+                      <button className="btn-cancel" onClick={() => setEditingId(null)} disabled={saving}>
                         <X size={13} strokeWidth={2.5} /> Cancel
                       </button>
                     </div>
@@ -395,15 +458,21 @@ function LeadList({ leads, search, setSearch, filterStatus, setFilterStatus, onD
                         )}
                       </div>
                       <Badge status={lead.status} />
+
+                      {/* FIX: only show Edit/Delete buttons if current user owns this lead */}
                       <div className="lead-actions">
-                        <button
-                          className="btn-edit"
-                          onClick={() => startEdit(lead)}
-                          title="Edit lead"
-                        >
-                          <Pencil size={12} strokeWidth={2.5} /> Edit
-                        </button>
-                        <DeleteButton onDelete={() => handleDelete(lead.id, cardRef.current)} />
+                        {isLeadOwner && (
+                          <>
+                            <button
+                              className="btn-edit"
+                              onClick={() => startEdit(lead)}
+                              title="Edit lead"
+                            >
+                              <Pencil size={12} strokeWidth={2.5} /> Edit
+                            </button>
+                            <DeleteButton onDelete={() => handleDelete(lead.id, cardRef.current)} />
+                          </>
+                        )}
                       </div>
                     </div>
 

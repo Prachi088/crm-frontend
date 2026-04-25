@@ -1,41 +1,44 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState } from "react";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("token"));
-  const [user, setUser] = useState(() => {
+export function AuthProvider({ children }) {
+  // FIX: previously only stored token. Now also stores userId and email so
+  // LeadList can compare currentUser.id with lead.owner.id for ownership checks.
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [user,  setUser]  = useState(() => {
     try {
-      const saved = localStorage.getItem("crm_user");
-      return saved ? JSON.parse(saved) : null;
+      const stored = localStorage.getItem("crm-user");
+      return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
     }
   });
 
-  const login = useCallback((token, userData = null) => {
-    localStorage.setItem("token", token);
-    setToken(token);
-    if (userData) {
-      localStorage.setItem("crm_user", JSON.stringify(userData));
-      setUser(userData);
-    }
-  }, []);
+  // Called after successful login or register.
+  // data = { token, userId, email }  ← new shape from AuthResponse
+  const login = (data) => {
+    localStorage.setItem("token", data.token);
+    const userObj = { id: data.userId, email: data.email };
+    localStorage.setItem("crm-user", JSON.stringify(userObj));
+    setToken(data.token);
+    setUser(userObj);
+  };
 
-  const logout = useCallback(() => {
+  const logout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("crm_user");
+    localStorage.removeItem("crm-user");
     setToken(null);
     setUser(null);
-  }, []);
-
-  const isAuthenticated = Boolean(token);
+  };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ token, user, isAuthenticated: !!token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}

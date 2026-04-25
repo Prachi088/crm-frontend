@@ -114,8 +114,7 @@ if (!res.ok) {
 }
       // success
       setSuccess(isLogin ? "Welcome back! Signing you in…" : "Account created! Signing you in…");
-      login(data.token, data.user || { email });
-
+       login(data);   // ← NEW
       gsap.to(formRef.current, {
         opacity: 0, y: -12, duration: 0.3, delay: 0.6,
         onComplete: () => setTimeout(onClose, 80),
