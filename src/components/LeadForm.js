@@ -48,21 +48,17 @@ function LeadForm({ onAdd, onRequestAuth }) {
     }
 
     // Validate required fields
-            const nameErr  = validate("name", form.name);
-const emailErr = validate("email", form.email);
-const dealErr  =
-  !form.dealValue || Number(form.dealValue) <= 0
-    ? "Enter valid amount"
-    : "";
+    const nameErr  = validate("name", form.name);
+    const emailErr = validate("email", form.email);
+    // dealValue is OPTIONAL — only validate format if a value was entered
+    const dealErr  = form.dealValue && isNaN(Number(form.dealValue))
+      ? "Must be a number"
+      : "";
 
-if (nameErr || emailErr || dealErr) {
-  setFieldErrors({
-    name: nameErr,
-    email: emailErr,
-    dealValue: dealErr
-  });
-  return;
-}
+    if (nameErr || emailErr || dealErr) {
+      setFieldErrors({ name: nameErr, email: emailErr, dealValue: dealErr });
+      return;
+    }
 
     setLoading(true);
     const payload = {

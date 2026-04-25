@@ -362,21 +362,24 @@ export default function App() {
 
   // ── add lead — requires JWT ───────────────────────────────────
   const addLead = useCallback(async (form) => {
-    try {
-      const res = await fetch(`${API}/leads`, {
-        method:  "POST",
-        headers: authHeaders(),
-        body:    JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error();
-      await fetchLeads();
-      showToast("Lead added!");
-      return true;
-    } catch {
-      showToast("Failed to add lead", "error");
-      return false;
+  try {
+    const res = await fetch(`${API}/leads`, {
+      method:  "POST",
+      headers: authHeaders(),
+      body:    JSON.stringify(form),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || errData.error || "Failed to add lead");
     }
-  }, [fetchLeads, showToast]);
+    await fetchLeads();
+    showToast("Lead added!");
+    return true;
+  } catch (err) {
+    showToast(err.message || "Failed to add lead", "error");
+    return false;
+  }
+}, [fetchLeads, showToast]);
 
   const filtered = useMemo(() => leads.filter((l) => {
     const q           = search.toLowerCase();

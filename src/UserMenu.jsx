@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { LogOut, ChevronDown, User } from "lucide-react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../context/AuthContext";
 import "./UserMenu.css";
 
 /**

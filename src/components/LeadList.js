@@ -79,9 +79,8 @@ const isOwner = isLoggedIn && (leadOwnerId ? currentUserId == leadOwnerId : true
   const fetchNotes = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const res   = await fetch(`${API}/notes/lead/${leadId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res   = await fetch(`${API}/notes/lead/${leadId}`, { headers });
       if (!res.ok) return;
       const data = await res.json();
       setNotes(Array.isArray(data) ? data : []);
