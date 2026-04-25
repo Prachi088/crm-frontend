@@ -1,95 +1,75 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { User, Mail, Lock, Save, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { getStoredToken, fetchCurrentUserProfile, updateCurrentUserProfile } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
-const API = process.env.REACT_APP_API_URL;
-
-function authHeaders() {
-  const token = localStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 export default function ProfilePage() {
-  const { user: currentUser, login, logout } = useAuth();
-
-  const [email, setEmail]       = useState("");
+  const { login, logout } = useAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [toast, setToast]       = useState(null); // { msg, type }
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  const showToast = (msg, type = "success") => {
-    setToast({ msg, type });
+  const showToast = (message, type = "success") => {
+    setToast({ msg: message, type });
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Fetch current user profile on mount
   useEffect(() => {
-    const fetchProfile = async () => {
+    const loadProfile = async () => {
       try {
-        const res = await fetch(`${API}/users/me`, { headers: authHeaders() });
-
-        // FIX: token expired or invalid — log user out gracefully
-        if (res.status === 401 || res.status === 403) {
+        const data = await fetchCurrentUserProfile();
+        setEmail(data?.email || "");
+      } catch (error) {
+        if (error?.status === 401 || error?.status === 403) {
           logout();
           return;
         }
-
-        if (!res.ok) throw new Error("Failed to load profile");
-        const data = await res.json();
-        setEmail(data.email || "");
-      } catch (err) {
-        showToast(err.message || "Failed to load profile", "error");
+        showToast(error.message || "Failed to load profile", "error");
       } finally {
         setLoading(false);
       }
     };
-    fetchProfile();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    loadProfile();
+  }, [logout]);
 
   const handleSave = async () => {
-    if (!email.trim()) {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail) {
       showToast("Email cannot be empty", "error");
       return;
     }
 
     setSaving(true);
-    try {
-      const updates = { email: email.trim() };
-      if (password.trim()) updates.password = password.trim();
 
-      const res = await fetch(`${API}/users/me`, {
-        method:  "PUT",
-        headers: authHeaders(),
-        body:    JSON.stringify(updates),
+    try {
+      const updates = { email: trimmedEmail };
+      if (trimmedPassword) {
+        updates.password = trimmedPassword;
+      }
+
+      const data = await updateCurrentUserProfile(updates);
+
+      login({
+        token: getStoredToken(),
+        userId: data?.id ?? data?.userId,
+        email: data?.email ?? trimmedEmail,
       });
 
-      // FIX: token expired — log out instead of showing cryptic error
-      if (res.status === 401 || res.status === 403) {
+      setPassword("");
+      showToast("Profile updated successfully!");
+    } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
         logout();
         showToast("Session expired. Please log in again.", "error");
         return;
       }
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to update profile");
-      }
-
-      const data = await res.json();
-
-      // Update AuthContext so navbar reflects new email immediately
-      const token = localStorage.getItem("token");
-      login({ token, userId: data.id, email: data.email });
-
-      setPassword("");
-      showToast("Profile updated successfully!");
-    } catch (err) {
-      showToast(err.message || "Failed to update", "error");
+      showToast(error.message || "Failed to update profile", "error");
     } finally {
       setSaving(false);
     }
@@ -105,33 +85,34 @@ export default function ProfilePage() {
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px" }}>
-
-      {/* Toast */}
       {toast && (
-        <div
-          className={`toast toast-${toast.type}`}
-          role="alert"
-          style={{ marginBottom: 16 }}
-        >
-          {toast.type === "success"
-            ? <CheckCircle size={15} strokeWidth={2.5} />
-            : <AlertCircle size={15} strokeWidth={2.5} />}
+        <div className={`toast toast-${toast.type}`} role="alert" style={{ marginBottom: 16 }}>
+          {toast.type === "success" ? (
+            <CheckCircle size={15} strokeWidth={2.5} />
+          ) : (
+            <AlertCircle size={15} strokeWidth={2.5} />
+          )}
           <span>{toast.msg}</span>
         </div>
       )}
 
-      {/* Card */}
       <div className="form-card">
-
-        {/* Avatar + header */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: "50%",
-            background: "rgba(99,102,241,0.12)",
-            border: "2px solid rgba(99,102,241,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#6366F1", fontWeight: 700, fontSize: 20,
-          }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              background: "rgba(99,102,241,0.12)",
+              border: "2px solid rgba(99,102,241,0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#6366F1",
+              fontWeight: 700,
+              fontSize: 20,
+            }}
+          >
             {email ? email[0].toUpperCase() : <User size={24} />}
           </div>
           <div>
@@ -144,7 +125,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Email field */}
         <div className="form-group" style={{ marginBottom: 16 }}>
           <label className="form-label">
             <Mail size={13} strokeWidth={2} className="form-label-icon" />
@@ -158,13 +138,12 @@ export default function ProfilePage() {
               className="form-input input-with-icon"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               placeholder="your@email.com"
             />
           </div>
         </div>
 
-        {/* Password field */}
         <div className="form-group" style={{ marginBottom: 24 }}>
           <label className="form-label">
             <Lock size={13} strokeWidth={2} className="form-label-icon" />
@@ -181,28 +160,33 @@ export default function ProfilePage() {
               className="form-input input-with-icon"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="********"
             />
           </div>
         </div>
 
-        {/* Save button */}
-        <button
-          className="btn-primary"
-          onClick={handleSave}
-          disabled={saving}
-          style={{ width: "100%" }}
-        >
-          {saving
-            ? <><Loader2 size={15} strokeWidth={2} className="spin-icon" /> Saving…</>
-            : <><Save size={15} strokeWidth={2} /> Save Changes</>}
+        <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ width: "100%" }}>
+          {saving ? (
+            <>
+              <Loader2 size={15} strokeWidth={2} className="spin-icon" /> Saving...
+            </>
+          ) : (
+            <>
+              <Save size={15} strokeWidth={2} /> Save Changes
+            </>
+          )}
         </button>
 
-        <div style={{
-          marginTop: 16, fontSize: 12, color: "var(--text-muted)",
-          textAlign: "center", lineHeight: 1.5,
-        }}>
+        <div
+          style={{
+            marginTop: 16,
+            fontSize: 12,
+            color: "var(--text-muted)",
+            textAlign: "center",
+            lineHeight: 1.5,
+          }}
+        >
           Your profile is private. Only you can view and edit it.
         </div>
       </div>

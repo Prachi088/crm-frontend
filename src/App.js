@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { createLead as createLeadRequest, fetchLeads as fetchLeadsRequest } from "./api/client";
 import AuthModal from "./components/AuthModal";
 import { useAuth } from "./context/AuthContext";
 import {
@@ -23,8 +24,6 @@ import {
   Moon,
   Sun,
   Scale,
-  Menu,
-  X,
   TrendingUp,
   TrendingDown,
   DollarSign,
@@ -46,8 +45,6 @@ import "./App.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const API = process.env.REACT_APP_API_URL;
-
 const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
 
 const STATUS_COLORS_MAP = {
@@ -67,14 +64,6 @@ const NAV_ITEMS = [
 ];
 
 // ── helper: auth headers ──────────────────────────────────────────
-function authHeaders() {
-  const token = localStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 /* ─────────────────────────────────────────── */
 /* ANALYTICS SECTION                           */
 /* ─────────────────────────────────────────── */
@@ -318,6 +307,7 @@ export default function App() {
   const [showLanding, setShowLanding]   = useState(true);
   const [showTerms, setShowTerms]       = useState(false);
   const [showAuth, setShowAuth]         = useState(false);
+  const [authMode, setAuthMode]         = useState("login");
   const { token, user, logout }         = useAuth();
   const hamburgerRef                    = useRef(null);
   const navItemRefs                     = useRef({});
@@ -331,14 +321,18 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
+  const openAuth = useCallback((mode = "login") => {
+    setAuthMode(mode);
+    setShowAuth(true);
+  }, []);
+
   // ── fetch leads ───────────────────────────────────────────────
   const fetchLeads = useCallback(async () => {
     try {
-      const res  = await fetch(`${API}/leads`, { headers: authHeaders() });
-      const data = await res.json();
+      const data = await fetchLeadsRequest();
       setLeads(Array.isArray(data) ? data : []);
-    } catch {
-      showToast("Failed to load leads", "error");
+    } catch (err) {
+      showToast(err.message || "Failed to load leads", "error");
     } finally {
       setIsLoading(false);
     }
@@ -346,7 +340,7 @@ export default function App() {
 
   useEffect(() => {
     if (!showLanding) fetchLeads();
-  }, [showLanding, fetchLeads]);
+  }, [showLanding, token, fetchLeads]);
 
   // Animate nav items on mount
   useEffect(() => {
@@ -365,15 +359,7 @@ export default function App() {
   // ── add lead ──────────────────────────────────────────────────
   const addLead = useCallback(async (form) => {
     try {
-      const res = await fetch(`${API}/leads`, {
-        method:  "POST",
-        headers: authHeaders(),
-        body:    JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || errData.error || "Failed to add lead");
-      }
+      await createLeadRequest(form);
       await fetchLeads();
       showToast("Lead added!");
       return true;
@@ -419,17 +405,13 @@ export default function App() {
   }, []);
 
   const handleNavClick = useCallback((tabId, el) => {
-    if (tabId === "add" && !token) {
-      setShowAuth(true);
-      return;
-    }
     if (el) {
       gsap.fromTo(el, { scale: 0.94 }, { scale: 1, duration: 0.25, ease: "back.out(2)" });
     }
     setActiveTab(tabId);
     setSidebarOpen(false);
     hamburgerRef.current?.classList.remove("ham-open");
-  }, [token]);
+  }, []);
 
   // Footer nav handler — maps footer nav ids to tab ids
   const handleFooterNav = useCallback((target) => {
@@ -605,7 +587,7 @@ export default function App() {
             )}
 
             {!token ? (
-              <button className="btn-icon-text" onClick={() => setShowAuth(true)} title="Login / Register">
+              <button className="btn-icon-text" onClick={() => openAuth("login")} title="Login / Register">
                 <Users size={15} />
                 <span className="btn-label">Login</span>
               </button>
@@ -656,22 +638,13 @@ export default function App() {
             ) : (
               <div style={{ textAlign: "center", padding: "40px" }}>
                 <p>You must login to view your profile</p>
-                <button className="btn-icon-text" onClick={() => setShowAuth(true)}>
+                <button className="btn-icon-text" onClick={() => openAuth("login")}>
                   Login to Continue
                 </button>
               </div>
             )
           ) : activeTab === "add" ? (
-            token ? (
-              <LeadForm onAdd={addLead} />
-            ) : (
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <p>You must login to add leads</p>
-                <button className="btn-icon-text" onClick={() => setShowAuth(true)}>
-                  Login to Continue
-                </button>
-              </div>
-            )
+            <LeadForm onAdd={addLead} onRequestAuth={openAuth} />
           ) : (
             <LeadList
               leads={filtered}
@@ -679,7 +652,9 @@ export default function App() {
               setSearch={setSearch}
               filterStatus={filterStatus}
               setFilterStatus={setFilterStatus}
-              onRequestAuth={() => setShowAuth(true)}
+              onRequestAuth={openAuth}
+              onToast={showToast}
+              onOpenAddLead={() => setActiveTab("add")}
             />
           )}
         </div>
@@ -695,7 +670,7 @@ export default function App() {
 
       <ChatBox leads={leads} />
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} initialMode={authMode} />}
     </div>
   );
 }

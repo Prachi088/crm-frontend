@@ -1,15 +1,21 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import {
-  Mail, Lock, Eye, EyeOff, ArrowRight,
-  Sparkles, LogIn, UserPlus, AlertCircle, CheckCircle2,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  LogIn,
+  UserPlus,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
+import { loginUser, registerUser } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import "./AuthModal.css";
 
-const API = process.env.REACT_APP_API_URL;
-
-// initialMode: "login" (default) | "register"
 export default function AuthModal({ onClose, initialMode = "login" }) {
   const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(initialMode !== "register");
@@ -22,89 +28,103 @@ export default function AuthModal({ onClose, initialMode = "login" }) {
   const [fieldErrors, setFieldErrors] = useState({});
   const modalRef = useRef(null);
   const formRef = useRef(null);
-  const errorRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
 
-// DELETE your current useEffect and replace with these two:
+  useEffect(() => {
+    gsap.fromTo(".auth-backdrop", { opacity: 0 }, { opacity: 1, duration: 0.3 });
+    gsap.fromTo(
+      modalRef.current,
+      { opacity: 0, y: 40, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power2.out" }
+    );
+  }, []);
 
-// 1. Mount only
-useEffect(() => {
-  gsap.fromTo(".auth-backdrop", { opacity: 0 }, { opacity: 1, duration: 0.3 });
-  gsap.fromTo(
-    modalRef.current,
-    { opacity: 0, y: 40, scale: 0.95 },
-    { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power2.out" }
-  );
-}, []);
+  useEffect(() => {
+    if (!formRef.current) return;
+    gsap.fromTo(
+      formRef.current.querySelectorAll(".form-group"),
+      { y: 10 },
+      { y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.15 }
+    );
+  }, [isLogin]);
 
-// 2. On toggle only
-useEffect(() => {
-  if (!formRef.current) return;
-  gsap.fromTo(
-    formRef.current.querySelectorAll(".form-group"),
-    { y: 10 },
-    { y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.15 }
-  );
-}, [isLogin]);
+  useEffect(() => {
+    setIsLogin(initialMode !== "register");
+  }, [initialMode]);
 
-  // ── inline validation ──────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const validateField = (key, value) => {
-    if (key === "email" && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    const trimmedValue = value.trim();
+
+    if (key === "email" && trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
       return "Enter a valid email address";
     }
-    if (key === "password" && value && value.length < 6) {
+
+    if (key === "password" && trimmedValue && trimmedValue.length < 6) {
       return "Password must be at least 6 characters";
     }
+
     return "";
   };
 
   const handleBlur = (key, value) => {
-    const msg = validateField(key, value);
-    setFieldErrors((prev) => ({ ...prev, [key]: msg }));
+    const message = validateField(key, value);
+    setFieldErrors((prev) => ({ ...prev, [key]: message }));
   };
 
-  // ── submit ───────────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const closeModal = () => {
+    gsap.to(modalRef.current, {
+      opacity: 0,
+      y: 16,
+      scale: 0.97,
+      duration: 0.25,
+      onComplete: onClose,
+    });
+    gsap.to(".auth-backdrop", { opacity: 0, duration: 0.25 });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError("");
     setSuccess("");
 
-    // client-side guard
-    const emailErr = validateField("email", email);
-    const passErr  = validateField("password", password);
-    if (emailErr || passErr) {
-      setFieldErrors({ email: emailErr, password: passErr });
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const emailError = validateField("email", trimmedEmail);
+    const passwordError = validateField("password", trimmedPassword);
+
+    if (emailError || passwordError) {
+      setFieldErrors({ email: emailError, password: passwordError });
       return;
     }
 
     setIsLoading(true);
+
     try {
-      const endpoint = isLogin ? `${API}/auth/login` : `${API}/auth/register`;
-      const res = await fetch(endpoint, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password }),
-});
+      const submitAuth = isLogin ? loginUser : registerUser;
+      const data = await submitAuth({
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
 
-const text = await res.text();
+      login(data);
+      setSuccess(isLogin ? "Welcome back! Signing you in..." : "Account created! Signing you in...");
+      setFieldErrors({});
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = window.setTimeout(onClose, 700);
 
-let data = {};
-try {
-  data = text ? JSON.parse(text) : {};
-} catch {
-  data = {};
-}
-
-if (!res.ok) {
-  throw new Error(
-    data?.message || data?.error || (isLogin ? "Invalid credentials." : "Registration failed.")
-  );
-}
-      // success
-      setSuccess(isLogin ? "Welcome back! Signing you in…" : "Account created! Signing you in…");
-       login(data);   // ← NEW
       gsap.to(formRef.current, {
-        opacity: 0, y: -12, duration: 0.3, delay: 0.6,
-        onComplete: () => setTimeout(onClose, 80),
+        opacity: 0,
+        y: -12,
+        duration: 0.3,
+        delay: 0.05,
       });
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -113,12 +133,13 @@ if (!res.ok) {
     }
   };
 
-  // ── toggle login / register ──────────────────────────────────────
   const toggleMode = () => {
     gsap.to(formRef.current, {
-      opacity: 0, x: isLogin ? 18 : -18, duration: 0.18,
+      opacity: 0,
+      x: isLogin ? 18 : -18,
+      duration: 0.18,
       onComplete: () => {
-        setIsLogin((v) => !v);
+        setIsLogin((value) => !value);
         setEmail("");
         setPassword("");
         setShowPassword(false);
@@ -129,10 +150,9 @@ if (!res.ok) {
     });
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target !== e.currentTarget) return;
-    gsap.to(modalRef.current, { opacity: 0, y: 16, scale: 0.97, duration: 0.25, onComplete: onClose });
-    gsap.to(".auth-backdrop", { opacity: 0, duration: 0.25 });
+  const handleBackdropClick = (event) => {
+    if (event.target !== event.currentTarget) return;
+    closeModal();
   };
 
   return (
@@ -141,7 +161,6 @@ if (!res.ok) {
         <div className="auth-bg-gradient" />
 
         <div className="auth-card">
-          {/* Header */}
           <div className="auth-header">
             <div className="auth-icon-badge">
               {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
@@ -152,15 +171,13 @@ if (!res.ok) {
             </p>
           </div>
 
-          {/* Error banner */}
           {error && (
-            <div className="auth-alert auth-alert--error" ref={errorRef}>
+            <div className="auth-alert auth-alert--error">
               <AlertCircle size={15} />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Success banner */}
           {success && (
             <div className="auth-alert auth-alert--success">
               <CheckCircle2 size={15} />
@@ -168,9 +185,7 @@ if (!res.ok) {
             </div>
           )}
 
-          {/* Form */}
           <form ref={formRef} onSubmit={handleSubmit} className="auth-form" noValidate>
-            {/* Email */}
             <div className={`form-group ${fieldErrors.email ? "form-group--error" : ""}`}>
               <label htmlFor="email" className="form-label">
                 <Mail size={15} className="form-label-icon" />
@@ -181,19 +196,24 @@ if (!res.ok) {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                onBlur={(e) => handleBlur("email", e.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setEmail(value);
+                  setError("");
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    email: prev.email ? validateField("email", value) : "",
+                  }));
+                }}
+                onBlur={(event) => handleBlur("email", event.target.value)}
                 className="form-input"
                 required
                 autoComplete="email"
               />
               <div className="form-underline" />
-              {fieldErrors.email && (
-                <span className="field-error">{fieldErrors.email}</span>
-              )}
+              {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
             </div>
 
-            {/* Password */}
             <div className={`form-group ${fieldErrors.password ? "form-group--error" : ""}`}>
               <label htmlFor="password" className="form-label">
                 <Lock size={15} className="form-label-icon" />
@@ -203,10 +223,18 @@ if (!res.ok) {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="********"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                  onBlur={(e) => handleBlur("password", e.target.value)}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setPassword(value);
+                    setError("");
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      password: prev.password ? validateField("password", value) : "",
+                    }));
+                  }}
+                  onBlur={(event) => handleBlur("password", event.target.value)}
                   className="form-input"
                   required
                   autoComplete={isLogin ? "current-password" : "new-password"}
@@ -214,7 +242,7 @@ if (!res.ok) {
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() => setShowPassword((v) => !v)}
+                  onClick={() => setShowPassword((value) => !value)}
                   tabIndex="-1"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
@@ -222,21 +250,18 @@ if (!res.ok) {
                 </button>
               </div>
               <div className="form-underline" />
-              {fieldErrors.password && (
-                <span className="field-error">{fieldErrors.password}</span>
-              )}
+              {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
             </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading || Boolean(success)}
-              className="auth-submit-btn"
-            >
+            <button type="submit" disabled={isLoading || Boolean(success)} className="auth-submit-btn">
               <span className="btn-text">
                 {isLoading
-                  ? isLogin ? "Signing in…" : "Creating account…"
-                  : isLogin ? "Sign In" : "Create Account"}
+                  ? isLogin
+                    ? "Signing in..."
+                    : "Creating account..."
+                  : isLogin
+                    ? "Sign In"
+                    : "Create Account"}
               </span>
               {!isLoading && !success && <ArrowRight size={16} className="btn-icon" />}
               {isLoading && <div className="spinner" />}
@@ -244,9 +269,10 @@ if (!res.ok) {
             </button>
           </form>
 
-          <div className="auth-divider"><span>or</span></div>
+          <div className="auth-divider">
+            <span>or</span>
+          </div>
 
-          {/* Toggle */}
           <button type="button" onClick={toggleMode} className="auth-toggle-btn">
             <span className="toggle-text">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -254,23 +280,16 @@ if (!res.ok) {
             <span className="toggle-action">{isLogin ? "Sign Up" : "Sign In"}</span>
           </button>
 
-          {/* Footer */}
           <div className="auth-footer">
-             <button
-              type="button"
-              onClick={() => {
-                gsap.to(modalRef.current, { opacity: 0, y: 16, scale: 0.97, duration: 0.25, onComplete: onClose });
-                gsap.to(".auth-backdrop", { opacity: 0, duration: 0.25 });
-              }}
-              className="close-btn"
-              aria-label="Close modal"
-            >
-              ✕
+            <button type="button" onClick={closeModal} className="close-btn" aria-label="Close modal">
+              x
             </button>
           </div>
         </div>
 
-        <div className="sparkle"><Sparkles size={16} /></div>
+        <div className="sparkle">
+          <Sparkles size={16} />
+        </div>
       </div>
     </div>
   );

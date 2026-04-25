@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { MessageCircle, X, Send, Bot, Zap } from "lucide-react";
+import { sendChatMessage } from "./api/client";
 import "./ChatBox.css";
-
-const API = process.env.REACT_APP_API_URL;
 
 function ChatBox({ leads }) {
   const [open, setOpen] = useState(false);
@@ -25,7 +24,9 @@ function ChatBox({ leads }) {
   }, [messages, loading]);
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 200);
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 200);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -36,44 +37,64 @@ function ChatBox({ leads }) {
 
   useEffect(() => {
     if (!fabRef.current || !windowRef.current) return;
+
     if (open) {
-      gsap.timeline()
+      gsap
+        .timeline()
         .to(fabRef.current, { scale: 0.9, duration: 0.2 })
         .to(fabRef.current, { scale: 1, duration: 0.1 }, 0.05)
-        .to(windowRef.current, {
-          opacity: 1, scale: 1, y: 0, pointerEvents: "all",
-          duration: 0.3, ease: "back.out(1.2)",
-        }, 0);
+        .to(
+          windowRef.current,
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            pointerEvents: "all",
+            duration: 0.3,
+            ease: "back.out(1.2)",
+          },
+          0
+        );
     } else {
       gsap.to(windowRef.current, {
-        opacity: 0, scale: 0.95, y: 20, pointerEvents: "none",
-        duration: 0.25, ease: "power2.in",
+        opacity: 0,
+        scale: 0.95,
+        y: 20,
+        pointerEvents: "none",
+        duration: 0.25,
+        ease: "power2.in",
       });
     }
   }, [open]);
 
   const buildContextMessage = useCallback(() => {
     const total = leads.length;
-    const won = leads.filter((l) => l.status === "CLOSED WON").length;
-    const lost = leads.filter((l) => l.status === "CLOSED LOST").length;
-    const pipeline = leads.reduce((s, l) => s + (Number(l.dealValue) || 0), 0);
+    const won = leads.filter((lead) => lead.status === "CLOSED WON").length;
+    const lost = leads.filter((lead) => lead.status === "CLOSED LOST").length;
+    const pipeline = leads.reduce((sum, lead) => sum + (Number(lead.dealValue) || 0), 0);
     const convRate = total ? Math.round((won / total) * 100) : 0;
     const statusCounts = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"]
-      .map((s) => `${s}: ${leads.filter((l) => l.status === s).length}`)
+      .map((status) => `${status}: ${leads.filter((lead) => lead.status === status).length}`)
       .join(", ");
     const recentLeads = leads
       .slice(0, 5)
-      .map((l) => `${l.name} at ${l.company || "N/A"} (${l.status}, ₹${Number(l.dealValue || 0).toLocaleString()})`)
+      .map(
+        (lead) =>
+          `${lead.name} at ${lead.company || "N/A"} (${lead.status}, INR ${Number(
+            lead.dealValue || 0
+          ).toLocaleString()})`
+      )
       .join("; ");
-    return `[CRM Data] Total: ${total} | Won: ${won} | Lost: ${lost} | Pipeline: ₹${pipeline.toLocaleString()} | Conversion: ${convRate}% | ${statusCounts} | Recent leads: ${recentLeads}`;
+
+    return `[CRM Data] Total: ${total} | Won: ${won} | Lost: ${lost} | Pipeline: INR ${pipeline.toLocaleString()} | Conversion: ${convRate}% | ${statusCounts} | Recent leads: ${recentLeads}`;
   }, [leads]);
 
   const sendMessage = useCallback(async () => {
     const text = input.trim();
     if (!text || loading) return;
 
-    const userMsg = { role: "user", content: text };
-    const updatedMessages = [...messages, userMsg];
+    const userMessage = { role: "user", content: text };
+    const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
     setLoading(true);
@@ -84,17 +105,7 @@ function ChatBox({ leads }) {
         { role: "assistant", content: "Got it! I have your pipeline data. How can I help?" },
         ...updatedMessages,
       ];
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ messages: messagesWithContext }),
-      });
-      if (!res.ok) throw new Error("Backend error");
-      const data = await res.json();
+      const data = await sendChatMessage({ messages: messagesWithContext });
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch {
       setMessages((prev) => [
@@ -104,11 +115,17 @@ function ChatBox({ leads }) {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, buildContextMessage]);
+  }, [buildContextMessage, input, loading, messages]);
 
-  const handleKey = useCallback((e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  }, [sendMessage]);
+  const handleKey = useCallback(
+    (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    },
+    [sendMessage]
+  );
 
   const handleSuggestionClick = useCallback((suggestion) => {
     setInput(suggestion);
@@ -117,28 +134,26 @@ function ChatBox({ leads }) {
 
   return (
     <>
-      {/* FAB Button */}
       <button
         ref={fabRef}
         className={`chat-fab ${open ? "chat-fab-open" : ""}`}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((value) => !value)}
         aria-label="Toggle chat"
         title="Chat with AI Assistant"
       >
-        {open
-          ? <X size={18} strokeWidth={2.5} color="#fff" />
-          : <MessageCircle size={20} strokeWidth={2} color="#fff" />
-        }
+        {open ? (
+          <X size={18} strokeWidth={2.5} color="#fff" />
+        ) : (
+          <MessageCircle size={20} strokeWidth={2} color="#fff" />
+        )}
         {!open && <span className="chat-fab-pulse" />}
       </button>
 
-      {/* Chat Window */}
       <div
         ref={windowRef}
         className={`chatbox-window ${open ? "chatbox-visible" : ""}`}
         style={{ opacity: 0, scale: 0.95, y: 20, pointerEvents: "none" }}
       >
-        {/* Header */}
         <div className="chatbox-header">
           <div className="chatbox-header-left">
             <div className="chatbox-avatar">
@@ -158,20 +173,19 @@ function ChatBox({ leads }) {
           </button>
         </div>
 
-        {/* Messages */}
         <div className="chatbox-messages">
-          {messages.map((msg, i) => (
+          {messages.map((message, index) => (
             <div
-              key={i}
-              className={`chat-msg ${msg.role === "user" ? "chat-msg-user" : "chat-msg-ai"}`}
-              style={{ animation: `slideInUp 0.3s ease-out forwards`, animationDelay: `${i * 50}ms` }}
+              key={index}
+              className={`chat-msg ${message.role === "user" ? "chat-msg-user" : "chat-msg-ai"}`}
+              style={{ animation: `slideInUp 0.3s ease-out forwards`, animationDelay: `${index * 50}ms` }}
             >
-              {msg.role === "assistant" && (
+              {message.role === "assistant" && (
                 <div className="msg-avatar">
                   <Bot size={11} strokeWidth={2} color="#fff" />
                 </div>
               )}
-              <div className="msg-bubble">{msg.content}</div>
+              <div className="msg-bubble">{message.content}</div>
             </div>
           ))}
 
@@ -181,32 +195,38 @@ function ChatBox({ leads }) {
                 <Bot size={11} strokeWidth={2} color="#fff" />
               </div>
               <div className="msg-bubble typing-bubble">
-                <span className="dot" /><span className="dot" /><span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
               </div>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggestions */}
         {messages.length === 1 && (
           <div className="chat-suggestions">
-            {["How's my pipeline?", "Which leads need attention?", "What's my conversion rate?"].map((s) => (
-              <button key={s} className="suggestion-pill" onClick={() => handleSuggestionClick(s)}>
-                {s}
-              </button>
-            ))}
+            {["How's my pipeline?", "Which leads need attention?", "What's my conversion rate?"].map(
+              (suggestion) => (
+                <button
+                  key={suggestion}
+                  className="suggestion-pill"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              )
+            )}
           </div>
         )}
 
-        {/* Input */}
         <div className="chatbox-input-row">
           <input
             ref={inputRef}
             className="chatbox-input"
             placeholder="Ask about your pipeline..."
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKey}
             disabled={loading}
             aria-label="Chat message input"

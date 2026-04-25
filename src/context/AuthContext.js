@@ -1,42 +1,86 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 const AuthContext = createContext(null);
+const TOKEN_STORAGE_KEY = "token";
+const USER_STORAGE_KEY = "crm-user";
+
+function normalizeUser(userLike) {
+  if (!userLike) return null;
+
+  const userId = userLike.userId ?? userLike.id ?? null;
+  const email = userLike.email ?? "";
+
+  if (!userId && !email) {
+    return null;
+  }
+
+  return {
+    id: userId,
+    userId,
+    email,
+  };
+}
+
+function normalizeAuthPayload(payload) {
+  return {
+    token: payload?.token ?? null,
+    user: normalizeUser(payload?.user ?? payload),
+  };
+}
+
+function readStoredUser() {
+  try {
+    const stored = localStorage.getItem(USER_STORAGE_KEY);
+    return stored ? normalizeUser(JSON.parse(stored)) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function AuthProvider({ children }) {
-  // FIX: previously only stored token. Now also stores userId and email so
-  // LeadList can compare currentUser.id with lead.owner.id for ownership checks.
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
-  const [user,  setUser]  = useState(() => {
-    try {
-      const stored = localStorage.getItem("crm-user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY));
+  const [user, setUser] = useState(readStoredUser);
+
+  const login = useCallback((payload) => {
+    const normalized = normalizeAuthPayload(payload);
+
+    if (normalized.token) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, normalized.token);
+    } else {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
-  });
 
-  // Called after successful login or register.
-  // data = { token, userId, email }  ← new shape from AuthResponse
-  const login = (data) => {
-    localStorage.setItem("token", data.token);
-    const userObj = { id: data.userId, email: data.email };
-    localStorage.setItem("crm-user", JSON.stringify(userObj));
-    setToken(data.token);
-    setUser(userObj);
-  };
+    if (normalized.user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized.user));
+    } else {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("crm-user");
+    setToken(normalized.token);
+    setUser(normalized.user);
+
+    return normalized;
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
     setToken(null);
     setUser(null);
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ token, user, isAuthenticated: !!token, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      token,
+      user,
+      isAuthenticated: !!token,
+      login,
+      logout,
+    }),
+    [token, user, login, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

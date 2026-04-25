@@ -1,43 +1,54 @@
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 import gsap from "gsap";
 import {
-  User, Mail, Building2, DollarSign,
-  Tag, UserPlus, Loader2, Lock,
+  User,
+  Mail,
+  Building2,
+  DollarSign,
+  Tag,
+  UserPlus,
+  Loader2,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
-
-const EMPTY = { name: "", email: "", company: "", dealValue: "", status: "PROSPECT" };
+const EMPTY_FORM = {
+  name: "",
+  email: "",
+  company: "",
+  dealValue: "",
+  status: "PROSPECT",
+};
 
 function LeadForm({ onAdd, onRequestAuth }) {
   const { isAuthenticated } = useAuth();
-  const [form, setForm]       = useState(EMPTY);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const cardRef = useRef(null);
 
-  // ── field-level validation ────────────────────────────────────
   const validate = (key, value) => {
-    if (key === "name"  && !value.trim()) return "Name is required";
-    if (key === "email" && !value.trim()) return "Email is required";
-    if (key === "email" && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+    const trimmedValue = typeof value === "string" ? value.trim() : value;
+
+    if (key === "name" && !trimmedValue) return "Name is required";
+    if (key === "email" && !trimmedValue) return "Email is required";
+    if (key === "email" && trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
       return "Enter a valid email";
-    if (key === "dealValue" && value && isNaN(Number(value)))
+    }
+    if (key === "dealValue" && trimmedValue !== "" && Number.isNaN(Number(trimmedValue))) {
       return "Must be a number";
+    }
     return "";
   };
 
   const handleBlur = (key, value) => {
-    const msg = validate(key, value);
-    setFieldErrors((prev) => ({ ...prev, [key]: msg }));
+    const message = validate(key, value);
+    setFieldErrors((prev) => ({ ...prev, [key]: message }));
   };
 
-  // ── submit ────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    // Auth gate
     if (!isAuthenticated) {
-      // Shake the card to hint auth is needed
       gsap.fromTo(
         cardRef.current,
         { x: 0 },
@@ -47,55 +58,88 @@ function LeadForm({ onAdd, onRequestAuth }) {
       return;
     }
 
-    // Validate required fields
-    const nameErr  = validate("name", form.name);
-    const emailErr = validate("email", form.email);
-    // dealValue is OPTIONAL — only validate format if a value was entered
-    const dealErr  = form.dealValue && isNaN(Number(form.dealValue))
-      ? "Must be a number"
-      : "";
+    const nameError = validate("name", form.name);
+    const emailError = validate("email", form.email);
+    const dealValueError = validate("dealValue", form.dealValue);
 
-    if (nameErr || emailErr || dealErr) {
-      setFieldErrors({ name: nameErr, email: emailErr, dealValue: dealErr });
+    if (nameError || emailError || dealValueError) {
+      setFieldErrors({
+        name: nameError,
+        email: emailError,
+        dealValue: dealValueError,
+      });
       return;
     }
 
     setLoading(true);
+
     const payload = {
-      ...form,
-      dealValue: form.dealValue ? parseFloat(form.dealValue) : null,
+      name: form.name.trim(),
+      email: form.email.trim(),
+      company: form.company.trim(),
+      dealValue: form.dealValue === "" ? null : Number(form.dealValue),
+      status: form.status,
     };
-    const ok = await onAdd(payload);
-    if (ok) {
-      setForm(EMPTY);
+
+    const added = await onAdd(payload);
+
+    if (added) {
+      setForm(EMPTY_FORM);
       setFieldErrors({});
-      // Success pulse on card
       gsap.fromTo(
         cardRef.current,
         { boxShadow: "0 0 0 0 rgba(34,197,94,0)" },
         { boxShadow: "0 0 0 6px rgba(34,197,94,0)", duration: 0.5, ease: "power2.out" }
       );
     }
+
     setLoading(false);
   };
 
   const fields = [
-    { key: "name",      label: "Full Name",        required: true,  type: "text",   placeholder: "e.g. Prachi Rajput",      Icon: User      },
-    { key: "email",     label: "Email Address",    required: true,  type: "email",  placeholder: "e.g. prachi@example.com", Icon: Mail      },
-    { key: "company",   label: "Company",          required: false, type: "text",   placeholder: "e.g. Sati College",       Icon: Building2 },
-    { key: "dealValue", label: "Deal Value (₹)",   required: false, type: "number", placeholder: "e.g. 50000",              Icon: DollarSign },
+    {
+      key: "name",
+      label: "Full Name",
+      required: true,
+      type: "text",
+      placeholder: "e.g. Prachi Rajput",
+      Icon: User,
+    },
+    {
+      key: "email",
+      label: "Email Address",
+      required: true,
+      type: "email",
+      placeholder: "e.g. prachi@example.com",
+      Icon: Mail,
+    },
+    {
+      key: "company",
+      label: "Company",
+      required: false,
+      type: "text",
+      placeholder: "e.g. Sati College",
+      Icon: Building2,
+    },
+    {
+      key: "dealValue",
+      label: "Deal Value (INR)",
+      required: false,
+      type: "number",
+      placeholder: "e.g. 50000",
+      Icon: DollarSign,
+    },
   ];
 
   return (
     <div className="form-card" ref={cardRef}>
-      {/* Auth hint banner — visible only when logged out */}
       {!isAuthenticated && (
         <div
           className="auth-hint-banner"
           onClick={() => onRequestAuth?.("login")}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => e.key === "Enter" && onRequestAuth?.("login")}
+          onKeyDown={(event) => event.key === "Enter" && onRequestAuth?.("login")}
         >
           <Lock size={13} strokeWidth={2} />
           <span>
@@ -109,7 +153,8 @@ function LeadForm({ onAdd, onRequestAuth }) {
           <div className={`form-group${fieldErrors[key] ? " form-group--has-error" : ""}`} key={key}>
             <label className="form-label">
               <Icon size={13} strokeWidth={2} className="form-label-icon" />
-              {label}{required && <span className="required-star">*</span>}
+              {label}
+              {required && <span className="required-star">*</span>}
             </label>
             <div className="input-icon-wrap">
               <span className="input-icon-prefix">
@@ -120,22 +165,22 @@ function LeadForm({ onAdd, onRequestAuth }) {
                 type={type}
                 placeholder={placeholder}
                 value={form[key]}
-                onChange={(e) => {
-                  setForm({ ...form, [key]: e.target.value });
-                  if (fieldErrors[key]) handleBlur(key, e.target.value);
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setForm((prev) => ({ ...prev, [key]: value }));
+                  if (fieldErrors[key]) {
+                    handleBlur(key, value);
+                  }
                 }}
-                onBlur={(e) => handleBlur(key, e.target.value)}
+                onBlur={(event) => handleBlur(key, event.target.value)}
                 disabled={!isAuthenticated}
                 aria-invalid={Boolean(fieldErrors[key])}
               />
             </div>
-            {fieldErrors[key] && (
-              <span className="inline-field-error">{fieldErrors[key]}</span>
-            )}
+            {fieldErrors[key] && <span className="inline-field-error">{fieldErrors[key]}</span>}
           </div>
         ))}
 
-        {/* Status */}
         <div className="form-group">
           <label className="form-label">
             <Tag size={13} strokeWidth={2} className="form-label-icon" />
@@ -148,10 +193,12 @@ function LeadForm({ onAdd, onRequestAuth }) {
             <select
               className="form-input input-with-icon"
               value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
+              onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
               disabled={!isAuthenticated}
             >
-              {STATUSES.map((s) => <option key={s}>{s}</option>)}
+              {STATUSES.map((status) => (
+                <option key={status}>{status}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -164,7 +211,7 @@ function LeadForm({ onAdd, onRequestAuth }) {
           {loading ? (
             <>
               <Loader2 size={15} strokeWidth={2} className="spin-icon" />
-              Adding…
+              Adding...
             </>
           ) : !isAuthenticated ? (
             <>
@@ -189,7 +236,6 @@ function LeadForm({ onAdd, onRequestAuth }) {
           margin-left: 2px;
         }
 
-        /* Auth hint banner */
         .auth-hint-banner {
           display: flex;
           align-items: center;
@@ -211,7 +257,6 @@ function LeadForm({ onAdd, onRequestAuth }) {
         }
         .auth-hint-banner strong { font-weight: 700; }
 
-        /* Inline field error */
         .inline-field-error {
           font-size: 11.5px;
           color: var(--danger, #F43F5E);
@@ -227,12 +272,10 @@ function LeadForm({ onAdd, onRequestAuth }) {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Error field underline */
         .form-group--has-error .form-input {
           border-color: var(--danger, #F43F5E) !important;
         }
 
-        /* Locked button variant */
         .btn-primary--locked {
           background: var(--surface, #F3F4F6) !important;
           color: #6366F1 !important;
@@ -244,7 +287,6 @@ function LeadForm({ onAdd, onRequestAuth }) {
           border-color: rgba(99,102,241,0.6) !important;
         }
 
-        /* Disabled inputs when logged out */
         .form-input:disabled {
           opacity: 0.55;
           cursor: not-allowed;
