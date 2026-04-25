@@ -84,9 +84,13 @@ function ChatBox({ leads }) {
         { role: "assistant", content: "Got it! I have your pipeline data. How can I help?" },
         ...updatedMessages,
       ];
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ messages: messagesWithContext }),
       });
       if (!res.ok) throw new Error("Backend error");

@@ -31,9 +31,11 @@ import {
   Trophy,
   CheckCircle,
   AlertCircle,
+  UserCircle,
 } from "lucide-react";
 import LeadForm from "./components/LeadForm";
 import LeadList from "./components/LeadList";
+import ProfilePage from "./components/ProfilePage";
 import LandingPage from "./LandingPage";
 import ChatBox from "./ChatBox";
 import TermsModal from "./TermsModal";
@@ -54,9 +56,10 @@ const STATUS_COLORS_MAP = {
 };
 
 const NAV_ITEMS = [
-  { id: "leads", Icon: Users,      label: "Leads" },
-  { id: "add",   Icon: PlusCircle, label: "Add Lead" },
-  { id: "stats", Icon: BarChart2,  label: "Analytics" },
+  { id: "leads",   Icon: Users,       label: "Leads" },
+  { id: "add",     Icon: PlusCircle,  label: "Add Lead" },
+  { id: "stats",   Icon: BarChart2,   label: "Analytics" },
+  { id: "profile", Icon: UserCircle,  label: "My Profile" },
 ];
 
 // ── helper: auth headers ──────────────────────────────────────────
@@ -456,8 +459,8 @@ export default function App() {
     hamburgerRef.current?.classList.remove("ham-open");
   }, [token]);
 
-  const TAB_TITLES = { leads: "All Leads", add: "Add New Lead", stats: "Analytics" };
-  const TAB_ICONS  = { leads: Users, add: PlusCircle, stats: BarChart2 };
+  const TAB_TITLES = { leads: "All Leads", add: "Add New Lead", stats: "Analytics", profile: "My Profile" };
+  const TAB_ICONS  = { leads: Users, add: PlusCircle, stats: BarChart2, profile: UserCircle };
 
   if (showLanding) {
     return <LandingPage onEnter={() => setShowLanding(false)} />;
@@ -627,6 +630,17 @@ export default function App() {
             <LoadingSkeleton />
           ) : activeTab === "stats" ? (
             <AnalyticsSection leads={leads} />
+          ) : activeTab === "profile" ? (
+            token ? (
+              <ProfilePage />
+            ) : (
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <p>You must login to view your profile</p>
+                <button className="btn-icon-text" onClick={() => setShowAuth(true)}>
+                  Login to Continue
+                </button>
+              </div>
+            )
           ) : activeTab === "add" ? (
             token ? (
               <LeadForm onAdd={addLead} />
