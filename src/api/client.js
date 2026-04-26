@@ -140,13 +140,13 @@ export function createLeadNote(leadId, payload) {
   });
 }
 
-export function updateLeadNote(noteId, payload) {
-  return apiRequest(`/notes/${noteId}`, {
-    method: "PUT",
-    body: payload,
-    auth: true,
-  });
-}
+// export function updateLeadNote(noteId, payload) {
+//   return apiRequest(`/notes/${noteId}`, {
+//     method: "PUT",
+//     body: payload,
+//     auth: true,
+//   });
+// }
 
 export function deleteLeadNote(noteId) {
   return apiRequest(`/notes/${noteId}`, {

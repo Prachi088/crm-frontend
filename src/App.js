@@ -308,6 +308,7 @@ export default function App() {
   const [showTerms, setShowTerms]       = useState(false);
   const [showAuth, setShowAuth]         = useState(false);
   const [authMode, setAuthMode]         = useState("login");
+  const [viewUserId, setViewUserId]     = useState(null);
   const { token, user, logout }         = useAuth();
   const hamburgerRef                    = useRef(null);
   const navItemRefs                     = useRef({});
@@ -640,7 +641,13 @@ export default function App() {
             <AnalyticsSection leads={leads} />
           ) : activeTab === "profile" ? (
             token ? (
-              <ProfilePage />
+              <ProfilePage
+                viewUserId={viewUserId}
+                onBack={() => {
+                  setViewUserId(null);
+                  setActiveTab("leads");
+                }}
+              />
             ) : (
               <div style={{ textAlign: "center", padding: "40px" }}>
                 <p>You must login to view your profile</p>
@@ -661,6 +668,10 @@ export default function App() {
               onRequestAuth={openAuth}
               onToast={showToast}
               onOpenAddLead={() => setActiveTab("add")}
+              onViewProfile={(userId) => {
+                setViewUserId(userId);
+                setActiveTab("profile");
+              }}
             />
           )}
         </div>
