@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════
+ /* ═══════════════════════════════════════════════════
    ABOUT PAGE — CRM Lite
    Glassmorphic · Indigo/Violet · GSAP-ready
 ═══════════════════════════════════════════════════ */
@@ -11,8 +11,6 @@
   overflow: hidden;
   color: var(--text-primary);
   background: var(--bg-primary);
-  /* FIX: prevent horizontal overflow caused by orbs/scroll sections */
-  overflow-x: hidden;
 }
 
 /* ─── BACKGROUNDS ──────────────────────────────── */
@@ -90,10 +88,6 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 26px;
-  /* FIX: prevent badge from overflowing on very small screens */
-  max-width: 100%;
-  white-space: normal;
-  text-align: center;
 }
 
 .abt-title {
@@ -110,8 +104,6 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: abt-grad-shift 5s linear infinite;
-  /* FIX: allow title line breaks naturally on small screens */
-  word-break: break-word;
 }
 @keyframes abt-grad-shift {
   to { background-position: 240% center; }
@@ -179,8 +171,6 @@
   backdrop-filter: blur(14px);
   transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s;
   cursor: default;
-  /* FIX: ensure padding doesn't overflow card width */
-  box-sizing: border-box;
 }
 :root:not([data-theme="dark"]) .abt-stat-card {
   background: rgba(255,255,255,0.82);
@@ -271,9 +261,6 @@
   border: 1px solid var(--border);
   backdrop-filter: blur(14px);
   transition: transform 0.25s ease;
-  /* FIX: prevent card contents from overflowing */
-  box-sizing: border-box;
-  min-width: 0;
 }
 :root:not([data-theme="dark"]) .abt-chart-card {
   background: rgba(255,255,255,0.82);
@@ -288,10 +275,9 @@
 
 .abt-chart-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
-  /* FIX: wrap legend below label on narrow cards */
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -310,8 +296,6 @@
   font-size: 11px;
   color: var(--text-secondary);
   font-weight: 500;
-  /* FIX: allow legend items to wrap on very narrow cards */
-  flex-wrap: wrap;
 }
 
 .abt-legend-dot {
@@ -341,8 +325,6 @@
   transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s;
   cursor: default;
   overflow: hidden;
-  /* FIX: ensure padding is included in width calculation */
-  box-sizing: border-box;
 }
 :root:not([data-theme="dark"]) .abt-feat-card {
   background: rgba(255,255,255,0.82);
@@ -410,12 +392,9 @@
 
 .abt-theory-container {
   position: relative;
-  /* FIX: clip the scrolling strip cleanly; prevent page-level horizontal scroll */
   overflow: hidden;
   border-radius: 20px;
   padding: 0;
-  /* FIX: contain width to parent so it never bleeds outside abt-root */
-  max-width: 100%;
 }
 
 .abt-theory-scroll {
@@ -423,8 +402,6 @@
   gap: 20px;
   animation: abt-scroll-horizontal 16s linear infinite;
   will-change: transform;
-  /* FIX: prevent the flex row from causing horizontal page scroll */
-  width: max-content;
 }
 
 @keyframes abt-scroll-horizontal {
@@ -449,8 +426,6 @@
   backdrop-filter: blur(14px);
   transition: transform 0.26s ease, box-shadow 0.26s ease;
   cursor: default;
-  /* FIX: include padding in width */
-  box-sizing: border-box;
 }
 :root:not([data-theme="dark"]) .abt-theory-card {
   background: rgba(255,255,255,0.82);
@@ -501,8 +476,6 @@
   text-align: center;
   border: 1px solid rgba(99,102,241,0.30);
   backdrop-filter: blur(20px);
-  /* FIX: include padding in width */
-  box-sizing: border-box;
 }
 :root:not([data-theme="dark"]) .abt-cta-card {
   background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.05));
@@ -538,10 +511,6 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 20px;
-  /* FIX: allow badge text to wrap on small screens */
-  max-width: 100%;
-  white-space: normal;
-  text-align: center;
 }
 
 .abt-cta-title {
@@ -591,30 +560,4 @@
 @media (max-width: 480px) {
   .abt-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .abt-stat-value { font-size: 26px; }
-
-  /* FIX: hero badge and sub text scale for very small screens */
-  .abt-sub { font-size: 15px; }
-  .abt-hero-badge { font-size: 10.5px; padding: 5px 12px; }
-
-  /* FIX: chart cards need reduced padding on small phones */
-  .abt-chart-card { padding: 18px 14px; }
-  .abt-chart-label { font-size: 12px; }
-
-  /* FIX: CTA items stack into 2-column grid on very narrow screens */
-  .abt-cta-features { gap: 12px; }
-  .abt-cta-item { font-size: 12px; }
-
-  /* FIX: feature cards padding reduction */
-  .abt-feat-card { padding: 22px 18px; }
-
-  /* FIX: theory cards narrower min-width for phones */
-  .abt-theory-card { min-width: 240px; padding: 24px 18px; }
-}
-
-/* FIX: reduce orb sizes on mobile so they don't push layout */
-@media (max-width: 480px) {
-  .abt-orb-1 { width: 260px; height: 260px; }
-  .abt-orb-2 { width: 200px; height: 200px; }
-  .abt-orb-3 { width: 220px; height: 220px; }
-  .abt-orb-4 { width: 160px; height: 160px; }
 }
