@@ -8,6 +8,17 @@ import {
 import { getStoredToken, fetchCurrentUserProfile, updateCurrentUserProfile, apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
+// Responsive hook — triggers re-render on resize
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 600);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return isMobile;
+}
+
 const STATUS_COLORS = {
   PROSPECT:      { bg: "#EEF2FF", text: "#4338CA", dot: "#6366F1" },
   QUALIFIED:     { bg: "#FFF7ED", text: "#C2410C", dot: "#F97316" },
@@ -45,7 +56,7 @@ function LeadItem({ lead }) {
       style={{
         background: "var(--bg-surface)", borderRadius: "var(--radius-md)",
         padding: "12px 16px", border: "1px solid var(--border)",
-        display: "flex", alignItems: "center", gap: 12,
+        display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
         transition: "box-shadow 0.2s, transform 0.15s", opacity: 0,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "var(--shadow-md)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
@@ -90,7 +101,7 @@ function MiniStats({ leads }) {
     <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
       {stats.map((stat) => (
         <div key={stat.label} style={{
-          flex: 1, minWidth: 120,
+          flex: 1, minWidth: 90,
           background: "var(--bg-surface)", borderRadius: "var(--radius-md)",
           padding: "12px 16px", border: "1px solid var(--border)",
           display: "flex", alignItems: "center", gap: 10,
@@ -111,6 +122,7 @@ function MiniStats({ leads }) {
 // ── Own Profile ───────────────────────────────────────────────────
 function OwnProfile() {
   const { login, logout } = useAuth();
+  const isMobile = useIsMobile();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -203,7 +215,7 @@ function OwnProfile() {
   }
 
   return (
-    <div ref={containerRef} style={{ maxWidth: 680, margin: "0 auto", padding: "8px 0" }}>
+    <div ref={containerRef} style={{ maxWidth: 680, margin: "0 auto", padding: isMobile ? "8px 16px" : "8px 0", boxSizing: "border-box" }}>
       {toast && (
         <div className={`toast toast-${toast.type}`} role="alert" style={{ position: "relative", top: 0, right: 0, marginBottom: 16 }}>
           {toast.type === "success" ? <CheckCircle size={15} strokeWidth={2.5} /> : <AlertCircle size={15} strokeWidth={2.5} />}
@@ -223,17 +235,18 @@ function OwnProfile() {
             {email ? email[0].toUpperCase() : <User size={28} />}
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 20, color: "var(--text-primary)", fontFamily: "'DM Serif Display', serif" }}>
+            <div style={{ fontWeight: 700, fontSize: isMobile ? 17 : 20, color: "var(--text-primary)", fontFamily: "'DM Serif Display', serif" }}>
               My Profile
             </div>
-            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>{email}</div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2, wordBreak: "break-all" }}>{email}</div>
           </div>
         </div>
         <MiniStats leads={leads} />
       </div>
 
       {/* Settings card */}
-<div ref={cardRef} className="form-card" style={{ marginBottom: 20, opacity: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+      <div ref={cardRef} className="form-card" style={{ marginBottom: 20, opacity: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(99,102,241,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Shield size={15} color="var(--accent)" strokeWidth={2} />
           </div>
@@ -287,7 +300,7 @@ function OwnProfile() {
           </div>
         </div>
 
-        <button className="btn-primary" onClick={handleSave} disabled={saving || !password.trim()}>
+        <button className="btn-primary" onClick={handleSave} disabled={saving || !password.trim()} style={{ width: isMobile ? "100%" : undefined }}>
           {saving
             ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Saving...</>
             : <><Save size={15} strokeWidth={2} /> Update Password</>}
@@ -315,13 +328,21 @@ function OwnProfile() {
         )}
       </div>
 
-      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @media (max-width: 600px) {
+          .profile-lead-item { padding: 10px 12px !important; }
+          .form-card { padding: 16px !important; }
+          .btn-primary { justify-content: center; }
+        }
+      `}</style>
     </div>
   );
 }
 
 // ── Other User Profile (read-only) ────────────────────────────────
 function OtherProfile({ userId, onBack }) {
+  const isMobile = useIsMobile();
   const [profileData, setProfileData] = useState(null);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -377,7 +398,7 @@ function OtherProfile({ userId, onBack }) {
   const avatarColor = getAvatarColor(email);
 
   return (
-    <div ref={containerRef} style={{ maxWidth: 680, margin: "0 auto", padding: "8px 0" }}>
+    <div ref={containerRef} style={{ maxWidth: 680, margin: "0 auto", padding: isMobile ? "8px 16px" : "8px 0", boxSizing: "border-box" }}>
       {onBack && (
         <button onClick={onBack} className="btn-icon-text" style={{ marginBottom: 16 }}>
           <ArrowLeft size={14} strokeWidth={2} /> Back to Leads
@@ -395,10 +416,10 @@ function OtherProfile({ userId, onBack }) {
             {email ? email[0].toUpperCase() : <User size={28} />}
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 20, color: "var(--text-primary)", fontFamily: "'DM Serif Display', serif" }}>
+            <div style={{ fontWeight: 700, fontSize: isMobile ? 17 : 20, color: "var(--text-primary)", fontFamily: "'DM Serif Display', serif" }}>
               {email.split("@")[0]}
             </div>
-            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>Team Member</div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2, wordBreak: "break-all" }}>Team Member</div>
           </div>
         </div>
         <MiniStats leads={leads} />
