@@ -1,177 +1,119 @@
- # CRM Lite 🚀
+# CRM Lite — Frontend
 
-A full-stack Customer Relationship Management (CRM) application built with **Spring Boot** and **React**. Designed to manage leads, track deal values, and visualize sales pipeline data.
+A lightweight, modern CRM built for sales teams. Track leads, close deals, and visualize your pipeline — all in one place.
 
----
-
-## 🌐 Live Demo
-- 🌐 Frontend: https://crm-frontend-drab-eight.vercel.app
-- ⚙️ Backend API: https://crm-backend-8ir9.onrender.com
-- 📦 Database: PostgreSQL on Render
+> **Live Demo:** [crm-frontend-i84l.onrender.com](https://crm-frontend-i84l.onrender.com)
+> **Backend Repo:** [github.com/Prachi088/crm-backend](https://github.com/Prachi088/crm-backend)
 
 ---
 
-## 📸 Screenshots
+## Features
 
-> Add screenshots of your app here
-
----
-
-## ✨ Features
-
-- ✅ Add, Edit, Delete Leads
-- ✅ Lead status pipeline — Prospect → Qualified → Proposal → Closed Won → Closed Lost
-- ✅ Deal Value tracking per lead (₹)
-- ✅ Notes per lead
-- ✅ Search and filter leads
-- ✅ Analytics dashboard with Pie and Bar charts
-- ✅ Export leads to CSV
-- ✅ REST API with full CRUD operations
-- ✅ PostgreSQL database (production) + MySQL (local)
-- ✅ Deployed on Render (backend) + Vercel (frontend)
+- **Lead Management** — Scrollable lead list with name, email, company, deal value (INR), pipeline status badges, and High Value tags
+- **Add New Lead** — Form with full name, email, company, deal value, and status
+- **Analytics Dashboard** — Total leads, pipeline value (₹), conversion rate, closed won count, pipeline distribution pie chart, deal value by stage bar chart, and stage breakdown
+- **Search & Filter** — Search by name, email, or company; filter by pipeline status
+- **Export CSV** — Download all lead data as a CSV/Excel file
+- **Notes** — Attach and expand notes on individual leads
+- **Login / Logout** — Auth flow via modal with context-based session management
+- **Profile Page** — View logged-in user profile details
+- **About Page** — Marketing page with feature highlights
+- **Terms & Conditions** — Dedicated modal/page
+- **Global Footer** — Navigation and contact info across all pages
+- **Dark / Light Mode** — Theme toggle in the header
+- **AI Chat Widget** — Floating chat button powered by Groq AI
+- **Animated Landing Page** — GSAP + Lenis smooth scroll with word-by-word hero reveal, parallax orbs, and scroll-triggered section animations
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
-### Backend
-| Technology | Purpose |
-|-----------|---------|
-| Java 21 | Programming language |
-| Spring Boot 4 | Backend framework |
-| Spring Data JPA | Database ORM |
-| PostgreSQL | Production database (Render) |
-| MySQL | Local development database |
-| Maven | Dependency management |
-
-### Frontend
-| Technology | Purpose |
-|-----------|---------|
-| React 18 | Frontend framework |
-| Recharts | Charts and analytics |
-| CSS3 | Styling |
+| Layer | Technology |
+|---|---|
+| Framework | React 18 |
+| Animations | GSAP, ScrollTrigger, Lenis |
+| Charts | Recharts |
+| Auth | Context API (AuthContext) |
+| API | Axios (custom client) |
+| AI | Groq AI |
+| Deployment | Render |
 
 ---
 
-## 🚀 How to Run Locally
+## Project Structure
+
+```
+crm-frontend/
+└── src/
+    ├── api/
+    │   └── client.js              # Axios instance and API config
+    ├── components/
+    │   ├── AuthModal.jsx          # Login / signup modal
+    │   ├── AuthModal.css
+    │   ├── LeadForm.jsx           # Add new lead form
+    │   ├── LeadList.jsx           # Lead list with search, filter, notes
+    │   ├── ProfilePage.jsx        # User profile page
+    │   └── UserMenu.jsx           # Header user menu dropdown
+    ├── context/
+    │   └── AuthContext.js         # Auth state and session management
+    ├── hooks/
+    │   └── useInView.js           # Intersection observer hook
+    ├── AboutPage.jsx              # About / marketing page
+    ├── App.jsx                    # Root component and routing
+    ├── ChatBox.jsx                # Groq AI floating chat widget
+    ├── DesignSystem.js            # Shared design tokens
+    ├── Footer.jsx                 # Global footer
+    ├── LandingPage.jsx            # Animated landing page
+    ├── LandingPage.css
+    ├── TermsModal.jsx             # Terms and conditions
+    └── index.js                  # Entry point
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Java 17+
+
 - Node.js 18+
-- MySQL
+- npm or yarn
+- Backend running locally or on Render — see [crm-backend](https://github.com/Prachi088/crm-backend)
 
-### Backend Setup
+### Installation
+
 ```bash
-# 1. Clone the repository
-git clone https://github.com/Prachi088/crm-backend.git
-
-# 2. Open in IntelliJ IDEA
-
-# 3. Create MySQL database
-mysql -u root -p
-CREATE DATABASE crmdb;
-
-# 4. Update application.properties
-spring.datasource.url=jdbc:mysql://localhost:3306/crmdb
-spring.datasource.username=root
-spring.datasource.password=YOUR_PASSWORD
-
-# 5. Run the Spring Boot application
-./mvnw spring-boot:run
-
-# Backend runs at https://crm-backend-8ir9.onrender.com
-```
-
-### Frontend Setup
-```bash
-# 1. Clone the repository
 git clone https://github.com/Prachi088/crm-frontend.git
-
-# 2. Install dependencies
+cd crm-frontend
 npm install
+```
 
-# 3. Start the app
+### Environment Variables
+
+Create a `.env` file in the root:
+
+```env
+REACT_APP_API_URL=http://localhost:8080
+```
+
+### Run Locally
+
+```bash
 npm start
+```
 
-# 4. Open browser at
-http://localhost:3000
+App runs at `http://localhost:3000`.
+
+### Build for Production
+
+```bash
+npm run build
 ```
 
 ---
 
-## 📡 API Endpoints
-
-### Leads
-| Method | Endpoint | Description |
-|--------|---------|-------------|
-| GET | `/api/leads` | Get all leads |
-| GET | `/api/leads/{id}` | Get lead by ID |
-| POST | `/api/leads` | Create new lead |
-| PUT | `/api/leads/{id}` | Update lead by ID |
-| DELETE | `/api/leads/{id}` | Delete lead by ID |
-
-### Notes
-| Method | Endpoint | Description |
-|--------|---------|-------------|
-| GET | `/api/notes` | Get all notes |
-| GET | `/api/notes/{id}` | Get note by ID |
-| GET | `/api/notes/lead/{leadId}` | Get all notes for a lead |
-| POST | `/api/notes/lead/{leadId}` | Add note to a lead |
-| PUT | `/api/notes/{id}` | Update note by ID |
-| DELETE | `/api/notes/{id}` | Delete note by ID |
-
----
-
-## 📁 Project Structure
-
-```
-crm-backend/                        # Spring Boot Backend
-├── src/main/java/com/crm/crm_lite/
-│   ├── controller/
-│   │   ├── LeadController.java
-│   │   └── NoteController.java
-│   ├── model/
-│   │   ├── Lead.java
-│   │   └── Note.java
-│   ├── repository/
-│   │   ├── LeadRepository.java
-│   │   └── NoteRepository.java
-│   └── service/
-│       ├── LeadService.java
-│       └── NoteService.java
-└── src/main/resources/
-    └── application.properties
-
-crm-frontend/                       # React Frontend
-├── src/
-│   ├── components/
-│   │   ├── LeadForm.js
-│   │   └── LeadList.js
-│   ├── App.js
-│   ├── App.css
-│   └── index.css
-└── package.json
-```
-
----
-
-## 🌍 Deployment
-
-| Service | Platform | URL |
-|---------|---------|-----|
-| Frontend | Vercel | https://crm-frontend-drab-eight.vercel.app |
-| Backend | Render | https://crm-backend-8ir9.onrender.com |
-| Database | Render PostgreSQL | Managed by Render |
-
----
-
-## 👩‍💻 Author
+## Author
 
 **Prachi Rajput**
-- GitHub: [Prachi088](https://github.com/Prachi088)
-- LinkedIn: [Prachi Rajput](https://linkedin.com/in/prachi-rajput-023985280)
+[GitHub](https://github.com/Prachi088) · [LinkedIn](https://linkedin.com/in/prachi-rajput-023985280)
 
 ---
-
-## 📝 License
-This project is open source and available under the [MIT License](LICENSE).

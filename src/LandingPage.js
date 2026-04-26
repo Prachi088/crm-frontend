@@ -1,4 +1,4 @@
- import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import "./LandingPage.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -56,7 +56,6 @@ function LandingPage({ onEnter }) {
   useEffect(() => {
     const ctx = gsap.context(() => {
 
-      /* HERO — badge + subtitle + cta fade up on load */
       const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
       tl.to(".hero-badge", { opacity: 1, y: 0, duration: .8, delay: .2 })
@@ -64,7 +63,6 @@ function LandingPage({ onEnter }) {
         .to(".hero-actions",{ opacity: 1, y: 0, duration: .7 }, "-=.4")
         .to(".hero-scroll-hint", { opacity: 1, duration: .6 }, "-=.2");
 
-      /* HERO WORDS — staggered word-by-word reveal */
       gsap.to(".word", {
         opacity: 1,
         y: 0,
@@ -74,19 +72,14 @@ function LandingPage({ onEnter }) {
         delay: .3,
       });
 
-      /* STATS — scroll triggered */
       gsap.to(".stat-item", {
         opacity: 1, y: 0,
         duration: .8,
         stagger: .15,
         ease: "power3.out",
-        scrollTrigger: {
-          trigger: ".stats-section",
-          start: "top 80%",
-        },
+        scrollTrigger: { trigger: ".stats-section", start: "top 80%" },
       });
 
-      /* FEATURES left panel */
       gsap.to(".section-tag", {
         opacity: 1, duration: .6, stagger: .1,
         scrollTrigger: { trigger: ".features-section", start: "top 75%" },
@@ -100,19 +93,14 @@ function LandingPage({ onEnter }) {
         scrollTrigger: { trigger: ".features-section", start: "top 68%" },
       });
 
-      /* FEATURE CARDS — scroll in from left one by one */
       gsap.to(".feature-card", {
         opacity: 1, x: 0,
         duration: .75,
         stagger: .12,
         ease: "power3.out",
-        scrollTrigger: {
-          trigger: ".features-grid",
-          start: "top 78%",
-        },
+        scrollTrigger: { trigger: ".features-grid", start: "top 78%" },
       });
 
-      /* PIPELINE section heading */
       gsap.to(".pipeline-section .section-tag", {
         opacity: 1, duration: .6,
         scrollTrigger: { trigger: ".pipeline-section", start: "top 78%" },
@@ -122,7 +110,6 @@ function LandingPage({ onEnter }) {
         scrollTrigger: { trigger: ".pipeline-section", start: "top 75%" },
       });
 
-      /* PIPELINE STEPS + ARROWS */
       gsap.to(".pipeline-step", {
         opacity: 1, x: 0,
         duration: .6,
@@ -138,12 +125,10 @@ function LandingPage({ onEnter }) {
         scrollTrigger: { trigger: ".pipeline-track", start: "top 80%" },
       });
 
-      /* ABOUT left text */
       gsap.to(".about-section .section-tag",    { opacity: 1, duration: .6, scrollTrigger: { trigger: ".about-section", start: "top 78%" } });
       gsap.to(".about-section .section-heading",{ opacity: 1, y: 0, duration: .8, scrollTrigger: { trigger: ".about-section", start: "top 75%" } });
       gsap.to(".about-section .section-sub",    { opacity: 1, y: 0, duration: .7, scrollTrigger: { trigger: ".about-section", start: "top 72%" } });
 
-      /* ABOUT card slide in from right */
       gsap.to(".about-card", {
         opacity: 1, x: 0,
         duration: .9,
@@ -151,7 +136,6 @@ function LandingPage({ onEnter }) {
         scrollTrigger: { trigger: ".about-inner", start: "top 75%" },
       });
 
-      /* ORB parallax */
       gsap.to(".orb-1", {
         yPercent: -30,
         ease: "none",
@@ -168,7 +152,6 @@ function LandingPage({ onEnter }) {
     return () => ctx.revert();
   }, []);
 
-  /* ── Split hero title into words ── */
   const renderTitle = () => {
     const line1 = ["Close", "more", "deals."];
     const line2 = ["Track", "every", "lead."];
@@ -217,14 +200,11 @@ function LandingPage({ onEnter }) {
             <button className="btn-primary" onClick={onEnter}>
               Open Dashboard <span>→</span>
             </button>
-            <button className="btn-ghost">
-              View on GitHub
-            </button>
           </div>
         </div>
         <div className="hero-scroll-hint">
           <div className="scroll-line" />
-         </div>
+        </div>
       </section>
 
       {/* STATS */}
@@ -307,7 +287,7 @@ function LandingPage({ onEnter }) {
               Designed to demonstrate full-stack software engineering skills that map directly to production systems.
             </p>
             <div className="tech-stack">
-              {["React 18", "Spring Boot", "PostgreSQL", "Groq AI", "Recharts", "Vercel", "Render"].map((t) => (
+              {["React 18", "Spring Boot", "PostgreSQL", "Groq AI", "Recharts", "Render"].map((t) => (
                 <span key={t} className="tech-pill">{t}</span>
               ))}
             </div>
@@ -325,12 +305,6 @@ function LandingPage({ onEnter }) {
           </div>
         </div>
       </section>
-{/* 
-      FOOTER
-      <footer className="landing-footer">
-        // <span>© {new Date().getFullYear()} CRM Lite · MIT License</span>
-        <button className="footer-cta" onClick={onEnter}>Open Dashboard →</button>
-      </footer> */}
     </div>
   );
 }

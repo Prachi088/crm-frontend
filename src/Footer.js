@@ -62,7 +62,7 @@ const isDark = page === "landing";
             <li><a href="mailto:support@crmlite.dev" className="gfooter-info-link">support@crmlite.dev</a></li>
             <li><a href="https://github.com/Prachi088" target="_blank" rel="noreferrer" className="gfooter-info-link">GitHub Repository</a></li>
             <li><span className="gfooter-info-text">React &amp; Spring Boot</span></li>
-            <li><span className="gfooter-info-text">Vercel &amp; Render</span></li>
+            <li><span className="gfooter-info-text">Render &amp; Neon</span></li>
           </ul>
         </div>
       </div>
