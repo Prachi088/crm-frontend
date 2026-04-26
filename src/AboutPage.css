@@ -61,6 +61,7 @@
 .abt-chart-section,
 .abt-features-section,
 .abt-team-section,
+.abt-theory-section,
 .abt-cta-section,
 .abt-divider {
   position: relative;
@@ -585,17 +586,19 @@
   .abt-cta-features { gap: 12px; }
   .abt-cta-item { font-size: 12px; }
 
-  /* Theory cards: disable auto-scroll, stack vertically */
-  .abt-theory-scroll {
-    flex-direction: column;
-    animation: none;
-    transform: none !important;
-  }
+  /* Theory cards: keep horizontal marquee, shrink card width to fit mobile */
   .abt-theory-card {
-    flex: 0 0 auto;
-    min-width: 0;
-    width: 100%;
+    flex: 0 0 260px;
+    min-width: 260px;
     box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Prevent any internal card overflow showing a scrollbar indicator */
+  .abt-stat-card,
+  .abt-feat-card,
+  .abt-chart-card {
+    overflow: hidden;
   }
 
   /* Section spacing reduction */
