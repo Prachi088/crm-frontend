@@ -15,8 +15,7 @@ export default function GlobalFooter({ page = "default", leadsCount, user, onNav
     if (onNavigate) onNavigate(target);
   };
 
-  const isDark = page === "landing" || page === "about";
-
+const isDark = page === "landing";
   return (
     <footer className={`gfooter${isDark ? " gfooter--dark" : ""}`}>
       <div className="gfooter-divider" />
