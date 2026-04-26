@@ -12,14 +12,11 @@ import {
   DollarSign,
   StickyNote,
   Users,
-  Pencil,
-  Check,
 } from "lucide-react";
 import {
   createLeadNote,
   deleteLeadNote,
   fetchLeadNotes,
-  updateLeadNote,
 } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -88,17 +85,17 @@ function Notes({ leadId, currentUserId, onRequestAuth, onToast }) {
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(false);
   const [noteError, setNoteError] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState("");
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const isLoggedIn = Boolean(currentUserId);
 
   const resolveNoteError = useCallback(
     (error, fallbackMessage) => {
-      if (error?.status === 401 || error?.status === 403) {
+      if (error?.status === 401) {
         onRequestAuth?.("login");
         return "Session expired. Please sign in again.";
+      }
+      if (error?.status === 403) {
+        return "You don't have permission to do this.";
       }
       return error?.message || fallbackMessage;
     },
@@ -152,42 +149,6 @@ function Notes({ leadId, currentUserId, onRequestAuth, onToast }) {
       setNoteError(resolveNoteError(error, "Failed to add note"));
     } finally {
       setAdding(false);
-    }
-  };
-
-  const startEdit = (note) => {
-    setEditingId(note.id);
-    setEditText(note.content);
-    setNoteError("");
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditText("");
-  };
-
-  const saveEdit = async (noteId) => {
-    const content = editText.trim();
-    if (!content || saving) {
-      if (!content) {
-        setNoteError("Note content cannot be empty");
-      }
-      return;
-    }
-
-    setSaving(true);
-    setNoteError("");
-
-    try {
-      await updateLeadNote(noteId, { content });
-      await loadNotes();
-      setEditingId(null);
-      setEditText("");
-      onToast?.("Note updated successfully!", "success");
-    } catch (error) {
-      setNoteError(resolveNoteError(error, "Failed to update note"));
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -261,7 +222,6 @@ function Notes({ leadId, currentUserId, onRequestAuth, onToast }) {
                 currentUserId != null &&
                 note.createdBy?.id != null &&
                 String(note.createdBy.id) === String(currentUserId);
-              const isEditing = editingId === note.id;
 
               return (
                 <div
@@ -287,58 +247,18 @@ function Notes({ leadId, currentUserId, onRequestAuth, onToast }) {
                       )}
                       {new Date(note.createdAt || Date.now()).toLocaleString()}
                     </div>
-
-                    {isEditing ? (
-                      <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                        <input
-                          className="form-input notes-input"
-                          value={editText}
-                          onChange={(event) => setEditText(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") saveEdit(note.id);
-                            if (event.key === "Escape") cancelEdit();
-                          }}
-                          autoFocus
-                          disabled={saving}
-                          style={{ flex: 1, fontSize: 13 }}
-                        />
-                        <button
-                          className="btn-add-note"
-                          onClick={() => saveEdit(note.id)}
-                          disabled={saving || !editText.trim()}
-                          style={{ padding: "4px 10px" }}
-                        >
-                          <Check size={13} strokeWidth={2.5} />
-                          {saving ? "..." : "Save"}
-                        </button>
-                        <button className="btn-delete-note" onClick={cancelEdit} title="Cancel">
-                          <X size={14} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="note-content">{note.content}</div>
-                    )}
+                    <div className="note-content">{note.content}</div>
                   </div>
 
-                  {isNoteCreator && !isEditing && (
-                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                      <button
-                        className="btn-delete-note"
-                        onClick={() => startEdit(note)}
-                        title="Edit note"
-                        style={{ color: "#6366F1" }}
-                      >
-                        <Pencil size={13} strokeWidth={2} />
-                      </button>
-                      <button
-                        className="btn-delete-note"
-                        onClick={() => removeNote(note.id)}
-                        title="Delete note"
-                        disabled={deletingId === note.id}
-                      >
-                        <X size={14} strokeWidth={2.5} />
-                      </button>
-                    </div>
+                  {isNoteCreator && (
+                    <button
+                      className="btn-delete-note"
+                      onClick={() => removeNote(note.id)}
+                      title="Delete note"
+                      disabled={deletingId === note.id}
+                    >
+                      <X size={14} strokeWidth={2.5} />
+                    </button>
                   )}
                 </div>
               );
@@ -359,6 +279,7 @@ function LeadList({
   onRequestAuth,
   onToast,
   onOpenAddLead,
+  onViewProfile,
 }) {
   const { user: currentUser } = useAuth();
   const listRef = useRef(null);
@@ -439,15 +360,16 @@ function LeadList({
             <div key={lead.id} className="lead-card">
               <div>
                 <div className="lead-row">
-                  <Avatar name={lead.name} />
+                  <div onClick={() => lead.owner?.id && onViewProfile?.(lead.owner.id)} style={{ cursor: lead.owner?.id ? "pointer" : "default" }} title={lead.owner?.id ? "View profile" : undefined}><Avatar name={lead.name} /></div>
                   <div className="lead-info">
-                    <div className="lead-name" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                     <div className="lead-name" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
                       {lead.name}
                       {(() => {
                         const priority = getLeadPriority(lead);
                         return priority ? (
                           <span
                             style={{
+                              marginLeft: "8px",
                               padding: "2px 8px",
                               fontSize: "10px",
                               borderRadius: "6px",
@@ -479,8 +401,8 @@ function LeadList({
                     )}
                   </div>
                   <div style={{ alignSelf: "flex-start", flexShrink: 0 }}>
-                    <Badge status={lead.status} />
-                  </div>
+  <Badge status={lead.status} />
+</div>
                 </div>
 
                 <Notes
