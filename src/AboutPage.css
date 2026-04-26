@@ -1,4 +1,4 @@
- /* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    ABOUT PAGE — CRM Lite
    Glassmorphic · Indigo/Violet · GSAP-ready
 ═══════════════════════════════════════════════════ */
@@ -550,14 +550,67 @@
 }
 
 /* ─── RESPONSIVE ────────────────────────────────── */
+
+/* Prevent all max-width containers from overflowing the viewport */
+.abt-stats-grid,
+.abt-chart-section,
+.abt-features-section,
+.abt-theory-section,
+.abt-cta-section {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Theory scroll: prevent horizontal bleed on mobile */
+.abt-theory-section {
+  overflow: hidden;
+}
+
 @media (max-width: 600px) {
   .abt-root { padding: 56px 16px 48px; }
   .abt-hero { margin-bottom: 48px; }
   .abt-cta-card { padding: 40px 22px; }
   .abt-features-grid { grid-template-columns: 1fr; }
   .abt-team-grid { grid-template-columns: 1fr; }
+
+  /* Hero pills: wrap tightly, trim font */
+  .abt-hero-cta { gap: 8px; }
+  .abt-pill { font-size: 12px; padding: 5px 12px; }
+
+  /* Chart header: stack legend below title on narrow screens */
+  .abt-chart-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .abt-chart-legend { flex-wrap: wrap; }
+
+  /* CTA features: tighten spacing */
+  .abt-cta-features { gap: 12px; }
+  .abt-cta-item { font-size: 12px; }
+
+  /* Theory cards: disable auto-scroll, stack vertically */
+  .abt-theory-scroll {
+    flex-direction: column;
+    animation: none;
+    transform: none !important;
+  }
+  .abt-theory-card {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Section spacing reduction */
+  .abt-stats-grid,
+  .abt-chart-section,
+  .abt-features-section,
+  .abt-theory-section { margin-bottom: 48px; }
+  .abt-divider { margin-bottom: 48px; }
 }
+
 @media (max-width: 480px) {
   .abt-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .abt-stat-value { font-size: 26px; }
+
+  /* Prevent badge text overflow on very small screens */
+  .abt-cta-badge { font-size: 10px; }
+  .abt-hero-badge { font-size: 10px; }
 }
