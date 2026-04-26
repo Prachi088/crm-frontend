@@ -63,8 +63,12 @@ export default function AuthModal({ onClose, initialMode = "login" }) {
   const validateField = (key, value) => {
     const trimmedValue = value.trim();
 
-    if (key === "email" && trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
-      return "Enter a valid email address";
+    if (key === "email" && trimmedValue) {
+      // Use HTML5 email validation pattern (more permissive)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedValue)) {
+        return "Enter a valid email address";
+      }
     }
 
     if (key === "password" && trimmedValue && trimmedValue.length < 6) {
@@ -146,6 +150,15 @@ export default function AuthModal({ onClose, initialMode = "login" }) {
         setError("");
         setSuccess("");
         setFieldErrors({});
+
+        // Reset form opacity to visible after state updates
+        gsap.to(formRef.current, {
+          opacity: 1,
+          x: 0,
+          duration: 0.3,
+          delay: 0.05,
+          ease: "power2.out"
+        });
       },
     });
   };
