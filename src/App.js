@@ -411,6 +411,8 @@ export default function App() {
     setActiveTab(tabId);
     setSidebarOpen(false);
     hamburgerRef.current?.classList.remove("ham-open");
+    // Scroll to top when navigating to a new page
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   // Footer nav handler — maps footer nav ids to tab ids
@@ -421,7 +423,11 @@ export default function App() {
     }
     const tabMap = { leads: "leads", analytics: "stats", about: "about" };
     const tabId = tabMap[target];
-    if (tabId) setActiveTab(tabId);
+    if (tabId) {
+      setActiveTab(tabId);
+      // Scroll to top when navigating to a new page
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, []);
 
   const TAB_TITLES = {
