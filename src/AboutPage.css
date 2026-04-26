@@ -586,10 +586,24 @@
   .abt-cta-features { gap: 12px; }
   .abt-cta-item { font-size: 12px; }
 
-  /* Theory cards: keep horizontal marquee, shrink card width to fit mobile */
+  /* Theory section: disable marquee on mobile, show only first 4 cards stacked */
+  .abt-theory-container {
+    overflow: visible;
+  }
+  .abt-theory-scroll {
+    flex-direction: column;
+    animation: none;
+    transform: none !important;
+    gap: 16px;
+  }
+  /* Hide duplicate cards 5–8 (JS renders CRM_THEORY twice for the marquee loop) */
+  .abt-theory-card:nth-child(n+5) {
+    display: none;
+  }
   .abt-theory-card {
-    flex: 0 0 260px;
-    min-width: 260px;
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
     box-sizing: border-box;
     overflow: hidden;
   }
