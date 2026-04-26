@@ -233,8 +233,7 @@ function OwnProfile() {
       </div>
 
       {/* Settings card */}
-      <div ref={cardRef} className="form-card" style={{ marginBottom: 20, opacity: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+<div ref={cardRef} className="form-card" style={{ marginBottom: 20, opacity: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(99,102,241,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Shield size={15} color="var(--accent)" strokeWidth={2} />
           </div>
