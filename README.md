@@ -1,70 +1,178 @@
-# Getting Started with Create React App
+# CRM Lite — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A lightweight, animated CRM built for modern sales teams. Track leads, manage your pipeline, and visualise performance — all in one place.
 
-## Available Scripts
+> **Live Demo:** [crm-frontend-i84l.onrender.com](https://crm-frontend-i84l.onrender.com)
+> **Backend Repo:** [github.com/Prachi088/crm-backend](https://github.com/Prachi088/crm-backend)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Core
+- **Lead Management** — Scrollable lead list with name, email, company, deal value (INR), pipeline status badges, and priority tags (High Value, Stale, Needs Attention)
+- **Add New Lead** — Form with full validation for name, email, company, deal value, and pipeline status
+- **Search & Filter** — Search by name, email, or company; filter by pipeline status
+- **CSV Export** — Download the full lead database as a CSV file with one click
+- **Notes** — Attach, view, and delete contextual notes on any lead; only the note author can delete their own notes
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Analytics
+- KPI cards for total leads, pipeline value (₹), conversion rate, and closed-won count
+- Pipeline distribution pie chart
+- Deal value by stage bar chart
+- Stage breakdown with percentage progress bars
 
-### `npm test`
+### Auth & Users
+- **Login / Register** — GSAP-animated modal with email/password validation, inline field errors, and a password visibility toggle
+- **Session Management** — Token and user persisted to `localStorage` via `AuthContext`
+- **My Profile** — View and update your own account; see all leads you own with mini pipeline stats
+- **Team Member Profile** — Click any lead's avatar to view that user's public profile and their leads (read-only)
+- **UserMenu Dropdown** — Avatar-based dropdown in the navbar with sign-out
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### UI & Experience
+- **Animated Landing Page** — GSAP + Lenis smooth scroll with word-by-word hero reveal, parallax orbs, and scroll-triggered section animations
+- **About Page** — Area chart, radar chart, animated KPI counters, feature cards, and CRM theory cards powered by GSAP + Recharts
+- **Dark / Light Mode** — Theme toggle persisted to `localStorage`; CSS variables across all components
+- **AI Chat Widget** — Floating chat button powered by Groq AI (Llama 3); context-aware using live lead data
+- **Global Footer** — Navigation links, social links, contact info, and current-page highlighting
+- **Terms & Conditions Modal** — GSAP-animated modal with accept/close actions
+- **Toast Notifications** — Success and error toasts across all actions
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Tech Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Layer | Technology |
+|---|---|
+| Framework | React 18 |
+| Animations | GSAP 3, ScrollTrigger, Lenis |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Auth | Context API (`AuthContext`) |
+| API | Axios (custom client at `src/api/client.js`) |
+| AI | Groq AI — Llama 3 |
+| Testing | Jest, React Testing Library |
+| Deployment | Render |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## Project Structure
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```
+src/
+├── api/
+│   └── client.js              # Axios instance, API helpers, auth headers
+├── components/
+│   ├── AuthModal.jsx          # Login / register modal (GSAP animated)
+│   ├── AuthModal.css
+│   ├── LeadForm.js            # Add new lead form with validation
+│   ├── LeadList.js            # Lead list with search, filter, notes, avatars
+│   ├── ProfilePage.js         # Own profile (editable) + other user profile (read-only)
+│   └── UserMenu.jsx           # Navbar avatar dropdown
+│   └── UserMenu.css
+├── context/
+│   └── AuthContext.js         # Auth state, login/logout, localStorage sync
+├── hooks/
+│   └── useInView.js           # IntersectionObserver hook (useInView, useStagger)
+├── AboutPage.js               # About / marketing page with charts and animations
+├── AboutPage.css
+├── App.js                     # Root component — routing, layout, analytics, theme
+├── App.css
+├── ChatBox.js                 # Groq AI floating chat widget
+├── DesignSystem.js            # Shared design tokens (colors, typography, spacing)
+├── Footer.js                  # Global footer with navigation
+├── Footer.css
+├── LandingPage.js             # Animated landing page
+├── LandingPage.css
+├── TermsModal.js              # Terms & conditions modal
+├── index.js                   # Entry point — wraps app in AuthProvider
+└── index.css                  # Global reset
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Getting Started
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Prerequisites
 
-## Learn More
+- Node.js 18+
+- npm or yarn
+- Backend running locally or on Render — see [crm-backend](https://github.com/Prachi088/crm-backend)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Installation
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+git clone https://github.com/Prachi088/crm-frontend.git
+cd crm-frontend
+npm install
+```
 
-### Code Splitting
+### Environment Variables
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Create a `.env` file in the project root:
 
-### Analyzing the Bundle Size
+```env
+REACT_APP_API_URL=http://localhost:8080
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Run Locally
 
-### Making a Progressive Web App
+```bash
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+App runs at `http://localhost:3000`.
 
-### Advanced Configuration
+### Build for Production
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+npm run build
+```
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Testing
 
-### `npm run build` fails to minify
+Tests are written with **Jest** and **React Testing Library**. GSAP and API calls are mocked.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+npm test
+```
+
+### Test Coverage
+
+| File | What's tested |
+|---|---|
+| `AuthContext.test.js` | Login normalises and stores auth data; logout clears localStorage |
+| `AuthModal.test.jsx` | Register flow stores session and closes modal; stale errors clear on retry |
+| `LeadForm.test.js` | Trimmed payload submitted correctly; unauthenticated users are redirected to register |
+| `LeadList.test.js` | Notes: add, refresh, toast; creator-only edit/delete controls; post-delete empty state |
+
+---
+
+## Key Design Decisions
+
+- **Auth guard pattern** — `LeadForm` and notes check `isAuthenticated` before any mutation; unauthenticated users are prompted to sign in rather than hitting a 401.
+- **Payload normalisation** — `AuthContext` normalises every login response (`userId`, `id`, `email`) to a consistent shape before storing, preventing downstream mismatches.
+- **GSAP context cleanup** — All GSAP animations use `gsap.context()` scoped to a component ref and call `ctx.revert()` on unmount, preventing animation leaks.
+- **Design tokens** — `DesignSystem.js` exports a single `DESIGN_TOKENS` object and helper functions (`getStatusColor`, `getThemeColor`) consumed across components for consistent theming.
+- **Per-note ownership** — The delete button on a note is only rendered when `note.createdBy.id === currentUser.id`, enforced on the frontend and independently on the backend.
+
+---
+
+## Pipeline Stages
+
+| Stage | Colour |
+|---|---|
+| Prospect | Indigo `#6366F1` |
+| Qualified | Orange `#F97316` |
+| Proposal | Blue `#3B82F6` |
+| Closed Won | Green `#22C55E` |
+| Closed Lost | Red `#F43F5E` |
+
+---
+
+## Author
+
+**Prachi Rajput**
+[GitHub](https://github.com/Prachi088) · [LinkedIn](https://linkedin.com/in/prachi-rajput-023985280)
