@@ -41,7 +41,7 @@ These Terms & Conditions shall be governed by and construed in accordance with a
 If you have any questions about these Terms & Conditions, please contact us at support@crmlite.dev
 `;
 
-function TermsModal({ isOpen, onClose }) {
+function TermsModal({ isOpen, onClose, onAccept, requireAcceptance = false, accepted = false }) {
   const overlayRef = useRef(null);
   const modalRef = useRef(null);
   const scrollRef = useRef(null);
@@ -60,24 +60,33 @@ function TermsModal({ isOpen, onClose }) {
   }, [isOpen]);
 
   const handleAnimateClose = useCallback(() => {
+    if (requireAcceptance) return;
     if (!overlayRef.current || !modalRef.current) return;
     const tl = gsap.timeline();
     tl.to(modalRef.current, { scale: 0.95, y: 20, opacity: 0, duration: 0.3, ease: "power2.in" })
       .to(overlayRef.current, { opacity: 0, pointerEvents: "none", duration: 0.2 }, 0)
       .call(() => onClose(), [], 0);
-  }, [onClose]);
+  }, [onClose, requireAcceptance]);
+
+  const handleAccept = useCallback(() => {
+    if (!overlayRef.current || !modalRef.current) return;
+    const tl = gsap.timeline();
+    tl.to(modalRef.current, { scale: 0.98, y: 10, opacity: 0, duration: 0.22, ease: "power2.in" })
+      .to(overlayRef.current, { opacity: 0, pointerEvents: "none", duration: 0.18 }, 0)
+      .call(() => onAccept?.(), [], 0);
+  }, [onAccept]);
 
   useEffect(() => {
     if (isOpen) handleAnimateOpen();
   }, [isOpen, handleAnimateOpen]);
 
   const handleOverlayClick = (e) => {
-    if (e.target === overlayRef.current) handleAnimateClose();
+    if (!requireAcceptance && e.target === overlayRef.current) handleAnimateClose();
   };
 
   const handleEscapeKey = useCallback((e) => {
-    if (e.key === "Escape" && isOpen) handleAnimateClose();
-  }, [isOpen, handleAnimateClose]);
+    if (e.key === "Escape" && isOpen && !requireAcceptance) handleAnimateClose();
+  }, [isOpen, requireAcceptance, handleAnimateClose]);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -103,9 +112,11 @@ function TermsModal({ isOpen, onClose }) {
             <Scale size={18} strokeWidth={2} color="var(--accent)" />
             <h2 className="modal-title">Terms & Conditions</h2>
           </div>
-          <button className="modal-close" onClick={handleAnimateClose} aria-label="Close modal">
-            <X size={14} strokeWidth={2.5} />
-          </button>
+          {!requireAcceptance && (
+            <button className="modal-close" onClick={handleAnimateClose} aria-label="Close modal">
+              <X size={14} strokeWidth={2.5} />
+            </button>
+          )}
         </div>
 
         <div className="modal-body terms-content" ref={scrollRef}>
@@ -141,14 +152,18 @@ function TermsModal({ isOpen, onClose }) {
         </div>
 
         <div className="modal-footer">
-          <button className="btn-modal-close" onClick={handleAnimateClose}>
-            <XCircle size={14} strokeWidth={2} />
-            Close
-          </button>
-          <button className="btn-modal-accept" onClick={handleAnimateClose}>
-            <CheckCircle size={14} strokeWidth={2} />
-            Accept & Continue
-          </button>
+          {!requireAcceptance && (
+            <button className="btn-modal-close" onClick={handleAnimateClose}>
+              <XCircle size={14} strokeWidth={2} />
+              Close
+            </button>
+          )}
+          {!accepted && (
+            <button className="btn-modal-accept" onClick={handleAccept}>
+              <CheckCircle size={14} strokeWidth={2} />
+              Accept & Continue
+            </button>
+          )}
         </div>
       </div>
     </div>

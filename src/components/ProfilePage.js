@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { getStoredToken, fetchCurrentUserProfile, updateCurrentUserProfile, apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { LEAD_STATUS_COLORS, normalizeLeadStatus } from "../constants/crm";
 
 // Responsive hook — triggers re-render on resize
 function useIsMobile() {
@@ -19,14 +20,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-const STATUS_COLORS = {
-  PROSPECT:      { bg: "#EEF2FF", text: "#4338CA", dot: "#6366F1" },
-  QUALIFIED:     { bg: "#FFF7ED", text: "#C2410C", dot: "#F97316" },
-  PROPOSAL:      { bg: "#EFF6FF", text: "#1D4ED8", dot: "#3B82F6" },
-  "CLOSED WON":  { bg: "#F0FDF4", text: "#15803D", dot: "#22C55E" },
-  "CLOSED LOST": { bg: "#FFF1F2", text: "#BE123C", dot: "#F43F5E" },
-};
-
 const AVATAR_COLORS = ["#6366F1", "#F97316", "#22C55E", "#F43F5E", "#0EA5E9", "#A855F7"];
 
 function getAvatarColor(str) {
@@ -35,7 +28,11 @@ function getAvatarColor(str) {
 }
 
 function Badge({ status }) {
-  const colors = STATUS_COLORS[status] || { bg: "#F1F5F9", text: "#64748B", dot: "#94A3B8" };
+  const label = normalizeLeadStatus(status);
+  const statusColor = LEAD_STATUS_COLORS[label];
+  const colors = statusColor
+    ? { bg: statusColor.bg, text: statusColor.text, dot: statusColor.color }
+    : { bg: "#F1F5F9", text: "#64748B", dot: "#94A3B8" };
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 5,
@@ -43,7 +40,7 @@ function Badge({ status }) {
       background: colors.bg, color: colors.text, whiteSpace: "nowrap", flexShrink: 0,
     }}>
       <span style={{ width: 5, height: 5, borderRadius: "50%", background: colors.dot, display: "inline-block" }} />
-      {status}
+      {label}
     </span>
   );
 }

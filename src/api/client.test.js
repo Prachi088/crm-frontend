@@ -17,6 +17,7 @@ describe("api client", () => {
     global.fetch = jest.fn();
     localStorage.clear();
     delete process.env.REACT_APP_API_URL;
+    delete process.env.VITE_API_BASE_URL;
   });
 
   afterEach(() => {
@@ -24,7 +25,7 @@ describe("api client", () => {
   });
 
   test("normalizes api base urls with and without api suffix", () => {
-    expect(normalizeApiBaseUrl()).toBe("http://localhost:3000/api");
+    expect(normalizeApiBaseUrl()).toBe("http://localhost:8080/api");
     expect(normalizeApiBaseUrl("https://example.com")).toBe("https://example.com/api");
     expect(normalizeApiBaseUrl("https://example.com/api/")).toBe("https://example.com/api");
   });

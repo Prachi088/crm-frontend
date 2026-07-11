@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════ */
-/* USER MENU DROPDOWN                                              */
+/* USER MENU — Premium Design                                      */
 /* ═══════════════════════════════════════════════════════════════ */
 
 .user-menu {
@@ -7,150 +7,256 @@
   display: inline-flex;
 }
 
-/* Trigger pill */
+/* ── Trigger pill ──────────────────────────────────────────────── */
 .user-menu__trigger {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 10px 5px 5px;
-  background: var(--surface, #F8F9FB);
+  padding: 4px 12px 4px 4px;
+  background: var(--bg-surface, #F8F9FB);
   border: 1px solid var(--border, #E5E7EB);
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition: all 0.2s ease;
   font-family: inherit;
+  white-space: nowrap;
 }
 .user-menu__trigger:hover {
-  background: var(--surface-hover, #EDEEF5);
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+  background: var(--bg-secondary, #EDEEF5);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
 }
-.user-menu__trigger:active { transform: scale(0.98); }
+.user-menu__trigger:hover {
+  background: #EDEEF5;
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
+}
+.user-menu__trigger:active {
+  transform: scale(0.98) translateY(0);
+}
 
-/* Shared avatar base */
+/* ── Avatar ────────────────────────────────────────────────────── */
 .user-menu__avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+  letter-spacing: 0.5px;
 }
 .user-menu__avatar--lg {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   font-size: 14px;
 }
 
+/* ── Name ──────────────────────────────────────────────────────── */
 .user-menu__name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text, #374151);
-  max-width: 120px;
+  color: var(--text-primary, #1F2937);
+  max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.user-menu__chevron {
-  color: var(--text-muted, #9CA3AF);
+/* ── Role badge inside trigger ─────────────────────────────────── */
+.user-menu__role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
   flex-shrink: 0;
 }
+.user-menu__role-badge--admin {
+  color: #92400E;
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border: 1px solid #F59E0B44;
+}
+.user-menu__role-badge--user {
+  color: #3730A3;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+.user-menu__role-badge--manager {
+  color: #0369A1;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.24);
+}
 
-/* Dropdown panel */
+.user-menu__chevron {
+  color: #9CA3AF;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.user-menu__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ────────────────────────────────────────────── */
 .user-menu__dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  min-width: 220px;
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border, #E5E7EB);
-  border-radius: 14px;
-  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.12), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+  min-width: 240px;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow:
+    0 20px 40px -8px rgba(0, 0, 0, 0.14),
+    0 4px 12px -2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   overflow: hidden;
   z-index: 9998;
 }
 
-/* Info section */
+/* ── Info header ───────────────────────────────────────────────── */
 .user-menu__info {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+  border-bottom: 1px solid #F3F4F6;
 }
+
+.user-menu__info-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .user-menu__fullname {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text, #1F2937);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1F2937;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .user-menu__email {
-  font-size: 12px;
-  color: var(--text-muted, #9CA3AF);
+  font-size: 11.5px;
+  color: #9CA3AF;
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 148px;
 }
 
-.user-menu__divider {
-  height: 1px;
-  background: var(--border, #F3F4F6);
-  margin: 0;
+/* ── Role row inside dropdown ──────────────────────────────────── */
+.user-menu__role-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #FAFAFA;
+  border-bottom: 1px solid #F3F4F6;
 }
 
-/* Menu items */
+.user-menu__role-label {
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 500;
+  flex: 1;
+}
+
+.user-menu__role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.user-menu__role-pill--admin {
+  color: #92400E;
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border: 1px solid #F59E0B55;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+}
+.user-menu__role-pill--user {
+  color: #3730A3;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+.user-menu__role-pill--manager {
+  color: #0369A1;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.28);
+}
+
+/* ── Menu items ────────────────────────────────────────────────── */
 .user-menu__item {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 11px 16px;
+  padding: 12px 16px;
   background: none;
   border: none;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text, #374151);
+  color: #374151;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
   transition: background 0.15s, color 0.15s;
 }
 .user-menu__item:hover {
-  background: var(--surface, #F9FAFB);
+  background: #F9FAFB;
 }
-.user-menu__item--danger { color: #F43F5E; }
+.user-menu__item--danger {
+  color: #F43F5E;
+}
 .user-menu__item--danger:hover {
   background: #FFF1F2;
   color: #BE123C;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .user-menu__trigger {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  .user-menu__trigger:hover {
-    background: rgba(99, 102, 241, 0.12);
-    border-color: rgba(99, 102, 241, 0.3);
-  }
-  .user-menu__name { color: #E5E7EB; }
-
-  .user-menu__dropdown {
-    background: #1F2937;
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.4);
-  }
-  .user-menu__fullname { color: #F3F4F6; }
-  .user-menu__email    { color: #6B7280; }
-  .user-menu__divider  { background: rgba(255, 255, 255, 0.08); }
-  .user-menu__item     { color: #D1D5DB; }
-  .user-menu__item:hover { background: rgba(255, 255, 255, 0.05); }
-  .user-menu__item--danger { color: #F87171; }
-  .user-menu__item--danger:hover { background: rgba(244, 63, 94, 0.1); }
+/* ── Dark mode (data-theme based — matches app toggle) ─────────── */
+[data-theme="dark"] .user-menu__trigger {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
+[data-theme="dark"] .user-menu__trigger:hover {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+[data-theme="dark"] .user-menu__name { color: #E5E7EB; }
+
+[data-theme="dark"] .user-menu__dropdown {
+  background: #1F2937;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .user-menu__info {
+  background: linear-gradient(135deg, #111827, #1F2937);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .user-menu__fullname { color: #F3F4F6; }
+[data-theme="dark"] .user-menu__email    { color: #6B7280; }
+[data-theme="dark"] .user-menu__role-row {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .user-menu__role-label { color: #6B7280; }
+[data-theme="dark"] .user-menu__item       { color: #D1D5DB; }
+[data-theme="dark"] .user-menu__item:hover { background: rgba(255, 255, 255, 0.05); }
+[data-theme="dark"] .user-menu__item--danger       { color: #F87171; }
+[data-theme="dark"] .user-menu__item--danger:hover { background: rgba(244, 63, 94, 0.1); }

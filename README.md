@@ -112,7 +112,7 @@ npm install
 Create a `.env` file in the project root:
 
 ```env
-REACT_APP_API_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 ### Run Locally

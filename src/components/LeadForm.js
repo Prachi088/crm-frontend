@@ -9,24 +9,48 @@ import {
   UserPlus,
   Loader2,
   Lock,
+  Calendar,
+  Flag,
+  Megaphone,
+  UserCheck,
+  X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { fetchUsers } from "../api/client";
+import { LEAD_STATUSES, USER_ROLES } from "../constants/crm";
 
-const STATUSES = ["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED WON", "CLOSED LOST"];
 const EMPTY_FORM = {
   name: "",
   email: "",
   company: "",
   dealValue: "",
-  status: "PROSPECT",
+  status: "New",
+  leadSource: "",
+  assignedSalesRepId: "",
+  expectedRevenue: "",
+  followUpDate: "",
+  priority: "Medium",
 };
 
-function LeadForm({ onAdd, onRequestAuth }) {
+function LeadForm({ onAdd, onRequestAuth, onCancel }) {
   const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(EMPTY_FORM);
+  const [salesReps, setSalesReps] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const cardRef = useRef(null);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    Promise.resolve(fetchUsers())
+      .then((users) => {
+        const reps = Array.isArray(users)
+          ? users.filter((user) => user.role === USER_ROLES.SALES_REP || user.role === "ROLE_SALES_REP")
+          : [];
+        setSalesReps(reps);
+      })
+      .catch(() => setSalesReps([]));
+  }, [isAuthenticated]);
 
   const validate = (key, value) => {
     const trimmedValue = typeof value === "string" ? value.trim() : value;
@@ -39,12 +63,21 @@ function LeadForm({ onAdd, onRequestAuth }) {
     if (key === "dealValue" && trimmedValue !== "" && Number.isNaN(Number(trimmedValue))) {
       return "Must be a number";
     }
+    if (key === "expectedRevenue" && trimmedValue !== "" && Number.isNaN(Number(trimmedValue))) {
+      return "Must be a number";
+    }
     return "";
   };
 
   const handleBlur = (key, value) => {
     const message = validate(key, value);
     setFieldErrors((prev) => ({ ...prev, [key]: message }));
+  };
+
+  const handleCancel = () => {
+    setForm(EMPTY_FORM);
+    setFieldErrors({});
+    onCancel?.();
   };
 
   const handleSubmit = async () => {
@@ -61,12 +94,14 @@ function LeadForm({ onAdd, onRequestAuth }) {
     const nameError = validate("name", form.name);
     const emailError = validate("email", form.email);
     const dealValueError = validate("dealValue", form.dealValue);
+    const expectedRevenueError = validate("expectedRevenue", form.expectedRevenue);
 
-    if (nameError || emailError || dealValueError) {
+    if (nameError || emailError || dealValueError || expectedRevenueError) {
       setFieldErrors({
         name: nameError,
         email: emailError,
         dealValue: dealValueError,
+        expectedRevenue: expectedRevenueError,
       });
       return;
     }
@@ -79,6 +114,11 @@ function LeadForm({ onAdd, onRequestAuth }) {
       company: form.company.trim(),
       dealValue: form.dealValue === "" ? null : Number(form.dealValue),
       status: form.status,
+      leadSource: form.leadSource.trim(),
+      assignedSalesRepId: form.assignedSalesRepId || null,
+      expectedRevenue: form.expectedRevenue === "" ? null : Number(form.expectedRevenue),
+      followUpDate: form.followUpDate || null,
+      priority: form.priority,
     };
 
     const added = await onAdd(payload);
@@ -122,12 +162,36 @@ function LeadForm({ onAdd, onRequestAuth }) {
       Icon: Building2,
     },
     {
+      key: "leadSource",
+      label: "Lead Source",
+      required: false,
+      type: "text",
+      placeholder: "e.g. Website, Referral",
+      Icon: Megaphone,
+    },
+    {
       key: "dealValue",
       label: "Deal Value (INR)",
       required: false,
       type: "number",
       placeholder: "e.g. 50000",
       Icon: DollarSign,
+    },
+    {
+      key: "expectedRevenue",
+      label: "Expected Revenue (INR)",
+      required: false,
+      type: "number",
+      placeholder: "e.g. 75000",
+      Icon: DollarSign,
+    },
+    {
+      key: "followUpDate",
+      label: "Follow-up Date",
+      required: false,
+      type: "date",
+      placeholder: "",
+      Icon: Calendar,
     },
   ];
 
@@ -196,35 +260,88 @@ function LeadForm({ onAdd, onRequestAuth }) {
               onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
               disabled={!isAuthenticated}
             >
-              {STATUSES.map((status) => (
+              {LEAD_STATUSES.map((status) => (
                 <option key={status}>{status}</option>
               ))}
             </select>
           </div>
         </div>
 
-        <button
-          className={`btn-primary${!isAuthenticated ? " btn-primary--locked" : ""}`}
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 size={15} strokeWidth={2} className="spin-icon" />
-              Adding...
-            </>
-          ) : !isAuthenticated ? (
-            <>
-              <UserPlus size={15} strokeWidth={2} />
-              Sign up to Add Lead
-            </>
-          ) : (
-            <>
-              <UserPlus size={15} strokeWidth={2} />
-              Add Lead
-            </>
-          )}
-        </button>
+        <div className="form-group">
+          <label className="form-label">
+            <UserCheck size={13} strokeWidth={2} className="form-label-icon" />
+            Assigned Sales Representative
+          </label>
+          <div className="input-icon-wrap">
+            <span className="input-icon-prefix">
+              <UserCheck size={15} strokeWidth={1.8} />
+            </span>
+            <select
+              className="form-input input-with-icon"
+              value={form.assignedSalesRepId}
+              onChange={(event) => setForm((prev) => ({ ...prev, assignedSalesRepId: event.target.value }))}
+              disabled={!isAuthenticated}
+            >
+              <option value="">Unassigned</option>
+              {salesReps.map((rep) => (
+                <option key={rep.id ?? rep.userId ?? rep.email} value={rep.id ?? rep.userId}>
+                  {rep.name || rep.email}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            <Flag size={13} strokeWidth={2} className="form-label-icon" />
+            Priority
+          </label>
+          <div className="input-icon-wrap">
+            <span className="input-icon-prefix">
+              <Flag size={15} strokeWidth={1.8} />
+            </span>
+            <select
+              className="form-input input-with-icon"
+              value={form.priority}
+              onChange={(event) => setForm((prev) => ({ ...prev, priority: event.target.value }))}
+              disabled={!isAuthenticated}
+            >
+              {["Low", "Medium", "High"].map((priority) => (
+                <option key={priority}>{priority}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-actions-row">
+          <button
+            className={`btn-primary${!isAuthenticated ? " btn-primary--locked" : ""}`}
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={15} strokeWidth={2} className="spin-icon" />
+                Adding...
+              </>
+            ) : !isAuthenticated ? (
+              <>
+                <UserPlus size={15} strokeWidth={2} />
+                Sign up to Add Lead
+              </>
+            ) : (
+              <>
+                <UserPlus size={15} strokeWidth={2} />
+                Add Lead
+              </>
+            )}
+          </button>
+          <button className="btn-cancel" type="button" onClick={handleCancel} disabled={loading}>
+            <X size={15} strokeWidth={2} />
+            Cancel
+          </button>
+        </div>
       </div>
 
       <style>{`
@@ -291,6 +408,14 @@ function LeadForm({ onAdd, onRequestAuth }) {
           opacity: 0.55;
           cursor: not-allowed;
           background: transparent;
+        }
+
+        .form-actions-row {
+          display: flex;
+          gap: 10px;
+        }
+        .form-actions-row .btn-primary {
+          flex: 1;
         }
       `}</style>
     </div>

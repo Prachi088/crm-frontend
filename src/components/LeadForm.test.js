@@ -14,6 +14,10 @@ jest.mock("../context/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
+jest.mock("../api/client", () => ({
+  fetchUsers: jest.fn().mockResolvedValue([]),
+}));
+
 describe("LeadForm", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -45,7 +49,12 @@ describe("LeadForm", () => {
         email: "alice@example.com",
         company: "Example Co",
         dealValue: 50000,
-        status: "PROSPECT",
+        status: "New",
+        leadSource: "",
+        assignedSalesRepId: null,
+        expectedRevenue: null,
+        followUpDate: null,
+        priority: "Medium",
       })
     );
   });

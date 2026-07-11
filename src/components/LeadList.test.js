@@ -6,6 +6,7 @@ import {
   createLeadNote,
   deleteLeadNote,
   fetchLeadNotes,
+  searchLeads,
   updateLeadNote,
 } from "../api/client";
 
@@ -24,6 +25,7 @@ jest.mock("../api/client", () => ({
   createLeadNote: jest.fn(),
   deleteLeadNote: jest.fn(),
   fetchLeadNotes: jest.fn(),
+  searchLeads: jest.fn(),
   updateLeadNote: jest.fn(),
 }));
 
@@ -57,6 +59,11 @@ describe("LeadList notes", () => {
     useAuth.mockReturnValue({
       user: { id: 9, userId: 9, email: "owner@example.com" },
     });
+    searchLeads.mockResolvedValue({
+      leads: [lead],
+      totalPages: 1,
+      totalElements: 1,
+    });
   });
 
   afterEach(() => {
@@ -84,7 +91,7 @@ describe("LeadList notes", () => {
 
     renderLeadList({ onToast });
 
-    fireEvent.click(screen.getByRole("button", { name: /notes \(0\)/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /notes \(0\)/i }));
 
     await waitFor(() => expect(fetchLeadNotes).toHaveBeenCalledWith(1));
 
@@ -132,7 +139,7 @@ describe("LeadList notes", () => {
 
     renderLeadList({ onToast });
 
-    fireEvent.click(screen.getByRole("button", { name: /notes \(0\)/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /notes \(0\)/i }));
 
     expect(await screen.findByText("Original note")).toBeInTheDocument();
     expect(screen.getByTitle("Edit note")).toBeInTheDocument();
