@@ -4,6 +4,8 @@ A lightweight, animated CRM built for modern sales teams. Track leads, manage yo
 
 > **Live Demo:** [crm-frontend-i84l.onrender.com](https://crm-frontend-i84l.onrender.com)
 > **Backend Repo:** [github.com/Prachi088/crm-backend](https://github.com/Prachi088/crm-backend)
+>
+> ⚠️ The backend is hosted on Render's free tier, which spins down after inactivity. The first request after idle time may take **30–60 seconds** to wake up — this is expected, not a bug.
 
 ---
 
@@ -44,7 +46,7 @@ A lightweight, animated CRM built for modern sales teams. Track leads, manage yo
 
 | Layer | Technology |
 |---|---|
-| Framework | React 18 |
+| Framework | React 18 (Create React App) |
 | Animations | GSAP 3, ScrollTrigger, Lenis |
 | Charts | Recharts |
 | Icons | Lucide React |
@@ -52,7 +54,7 @@ A lightweight, animated CRM built for modern sales teams. Track leads, manage yo
 | API | Axios (custom client at `src/api/client.js`) |
 | AI | Groq AI — Llama 3 |
 | Testing | Jest, React Testing Library |
-| Deployment | Render |
+| Deployment | Render (Static Site) |
 
 ---
 
@@ -109,11 +111,15 @@ npm install
 
 ### Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (copy `.env.example` if present):
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080
+REACT_APP_API_URL=http://localhost:8080
 ```
+
+> This project uses **Create React App**, so all environment variables **must** be prefixed with `REACT_APP_` — CRA silently ignores anything else at build time (e.g. `VITE_*` or unprefixed vars won't work here).
+
+For local development, point this at your locally running backend (`http://localhost:8080`). For production builds, this is set to the live Render backend URL (`https://crm-backend-8ir9.onrender.com`) — see [Deployment](#deployment) below.
 
 ### Run Locally
 
@@ -128,6 +134,22 @@ App runs at `http://localhost:3000`.
 ```bash
 npm run build
 ```
+
+---
+
+## Deployment
+
+This app is deployed as a **Render Static Site**, built from this repository.
+
+| Setting | Value |
+|---|---|
+| Build Command | `npm install && npm run build` |
+| Publish Directory | `build` |
+| Environment Variable | `REACT_APP_API_URL=https://crm-backend-8ir9.onrender.com` |
+
+**Important:** Create React App bakes `REACT_APP_*` variables into the build at **build time**, not runtime. If you change `REACT_APP_API_URL`, you must trigger a new deploy/rebuild for the change to take effect — editing it in Render's dashboard alone won't update an already-built static bundle.
+
+The backend must have this frontend's deployed URL added to its `CORS_ORIGINS` environment variable, or all API requests will be blocked by CORS. See the [backend README](https://github.com/Prachi088/crm-backend) for details.
 
 ---
 
@@ -169,6 +191,13 @@ npm test
 | Proposal | Blue `#3B82F6` |
 | Closed Won | Green `#22C55E` |
 | Closed Lost | Red `#F43F5E` |
+
+---
+
+## Known Limitations
+
+- New user registrations default to the `SALES_REPRESENTATIVE` role by design (the public registration form does not expose a role selector, to prevent self-service privilege escalation). Admin accounts must currently be promoted directly in the database.
+- Redis-backed caching on the backend is optional and falls back gracefully to direct database reads if unavailable — no frontend impact either way, but list-heavy pages may be marginally slower without it.
 
 ---
 
