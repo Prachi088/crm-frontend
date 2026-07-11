@@ -347,20 +347,26 @@ export default function App() {
   const [unreadCount, setUnreadCount] = useState(() =>
     notificationLog.filter((n) => !n.read).length
   );
-  const { token, user, acceptTerms }    = useAuth();
+  const { token, user, role, acceptTerms } = useAuth();
   const customerPageRef                 = useRef(null);
   const contactPageRef                  = useRef(null);
   const taskPageRef                     = useRef(null);
   const leadListRef                     = useRef(null);
-  const visibleNavItems = useMemo(
-    () => NAV_ITEMS.filter((item) => !item.roles || hasRole(user, item.roles)),
-    [user]
-  );
-  const canEditCustomers = hasRole(user, [USER_ROLES.ADMIN, USER_ROLES.MANAGER]);
-  const canEditContacts = hasRole(user, [USER_ROLES.ADMIN, USER_ROLES.MANAGER]);
-  const canEditTasks = hasRole(user, [USER_ROLES.ADMIN, USER_ROLES.MANAGER]);
+  const effectiveUser = useMemo(() => user ?? (role ? { role } : null), [user, role]);
+  // NOTE: Nav items are intentionally NOT filtered by role here anymore.
+  // Role-gating the sidebar/top-nav buttons themselves fails *closed*
+  // whenever `effectiveUser` isn't resolved yet (e.g. before auth state
+  // loads), silently hiding links instead of showing them. Actual access
+  // control already happens at the content level via `activeTabAllowed`
+  // and the `canEdit*` flags below, so every tab is safe to always list
+  // here — clicking a restricted one still shows the proper "no
+  // permission" / "please log in" state.
+  const visibleNavItems = NAV_ITEMS;
+  const canEditCustomers = hasRole(effectiveUser, [USER_ROLES.ADMIN, USER_ROLES.MANAGER]);
+  const canEditContacts = hasRole(effectiveUser, [USER_ROLES.ADMIN, USER_ROLES.MANAGER]);
+  const canEditTasks = hasRole(effectiveUser, [USER_ROLES.ADMIN, USER_ROLES.MANAGER]);
   const activeNavItem = NAV_ITEMS.find((item) => item.id === activeTab);
-  const activeTabAllowed = !activeNavItem?.roles || hasRole(user, activeNavItem.roles);
+  const activeTabAllowed = !activeNavItem?.roles || hasRole(effectiveUser, activeNavItem.roles);
 
   useEffect(() => {
     try {
